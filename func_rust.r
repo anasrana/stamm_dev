@@ -224,10 +224,11 @@ fitnSttModel <- function(gData, tData, tuning = 0.01, n.states = 3){
 ##'
 ##' .. content for \details{} ..
 ##' @title 
-##' @param wFit 
-##' @param betaFit 
-##' @param t 
-##' @return 
+##' @param wFit W transition matrix
+##' @param betaFit beta matrix p x T(n)
+##' @param t time points
+##' @return S unlogged trajectory for the arguments 
+##' @return P state occupation probabilities
 ##' @author anas ahmad rana
 rust.kStt <- function(wFit = NULL, betaFit, t){
   n <- length(t)
