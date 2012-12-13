@@ -60,8 +60,6 @@ rust.fit.nStt <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as='lin
     sum(ss)
   }
 
-  
-
   res <- nlminb(x0, fun, lower = 0, upper=max(tData)*2, control=list(iter.max = 3000,
                                                           eval.max=4000, rel.tol=10^-14))
   ## n.states=n.states, lambda=lambda, gData=gData, tData=tData) ##add if using external function
@@ -74,12 +72,44 @@ rust.fit.nStt <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as='lin
 
   bicSc <- n*log(rss/(n-1)) + log(n) * Df
   aicSc <- n*log(rss/(n-1)) + 2 * Df
-
-  return(list(fit=res, bic=bicSc, aic=aicSc))
+  par <- rust.par(gData, res$par, n.states)
+  
+  return(list(fit=res, w=par$w, beta=par$beta, bic=bicSc, aic=aicSc))
 
 }
 
+##' .. content for \description{} (no empty lines) ..
+##'
+##' .. content for \details{} ..
+##' @title rust.par
+##' @param gData data matrix used for naming beta
+##' @param x parameter vector to reshape into beta and w
+##' @param n.states number of states in model
+##' @return 
+##' @author anas ahmad rana
+rust.par <- function(gData, x, n.states){
+  ## W matrix from x[1:n-1]
+  if(n.states==2){                      
+    wFit <- matrix(0, n.states, n.states)
+    wFit[2,1] <- x[1]
+  } else if(n.states >=3) {
+    wFit <- matrix(0, n.states, n.states)
+    diag(wFit[-1, ]) <- x[1:(n.states - 1)]
+  } else {
+    wFit <- NULL
+  }
 
+  ## Assign other x values to beta
+  if(n.states==1){
+    betaFit <- matrix( x, p, n.states)
+  } else{
+    lnx <- length(x)
+    betaFit <- matrix( x[-c(1:(n.states - 1))], {lnx - n.states + 1}/ n.states, n.states)
+  }
+  rownames(betaFit) <- rownames(gData)
+  
+  return(list(w=wFit, beta=betaFit))
+}
 
 ## ----------[ RUST model (general) state indep ]--------------------
 ##' Function that takes as arguments the w_fit matrix and the beta_fit matrix, it then 
@@ -178,3 +208,4 @@ plotFit4stt <- function(w,betaFit, tData, gData, gene){
   points(tData, gData[gene,], col='blue', type='b')
   title(gene)
 }
+
