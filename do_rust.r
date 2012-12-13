@@ -1,4 +1,4 @@
-setwd("~/complexity/phd/code/")
+setwd("~/complexity/phd/projects/rust/code")
 ## ----------[loading libraries and function files]--------------------
 source("func_rust.r")
 source("func_plotting.r")
@@ -63,6 +63,4 @@ if(file.exists(trajctFileName)){
 }
 
 
-plotRustTraj(t, dt, datasim[,tPoints], simltn$gsim)
-, dataFit=mdlFit$S, mdlLegend=0) 
-plotRustTraj(t, dt, simltn$dataSim[,tPoints], dataMdl=mdl$S, dataFit=mdlFit$S, mdlLegend=1)
+tmp <- rust.fit.nStt(dat$g[rownames(fit3$beta[1:4,]),], dat$t, lambda = 0.1, n.states = 3, fit.as='log2Dat')

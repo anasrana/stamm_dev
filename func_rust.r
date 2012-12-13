@@ -16,12 +16,12 @@ library(expm)
 ##' @param tData time points of data
 ##' @param lambda L1 penalty parameter (default = 0.01)
 ##' @param n.states number of states in the fitting
+##' @param fit.as Fitting lin, log2Dat, logDat, log2Al (default = lin)
 ##' @return 
 ##' @author anas ahmad rana
-rust.fit.nStt <- function(gData, tData, lambda = 0.01, n.states = 3){
+rust.fit.nStt <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as='lin'){
   x0 <- runif( (n.states - 1) + nrow(gData) * n.states)
   p <- nrow(gData)
-
 
   fun <- function(x){
     ## initialise w matrix and assign non zero values
@@ -43,14 +43,24 @@ rust.fit.nStt <- function(gData, tData, lambda = 0.01, n.states = 3){
       fit <- rust.kStt(wFit, betaFit, tData)
     }
 
+    if(fit.as=='lin'){
+      rss <- (fit$S - gData)^2
+    } else if(fit.as=='log2Dat'){
+      rss <- (log2(fit$S) - gData)^2
+    } else if(fit.as=='logDat'){
+      rss <- (log(fit$S) - gData)^2
+    } else if(fit.as=='log2Al'){
+      rss <- (log2(fit$S) - log2(gData))^2
+    } else {
+      stop('String fit.as not recognised')
+    }
+    penalty <- lambda*sum(abs(betaFit)) 
 
-    rss <- (log(fit$S) - log(gData))^2
-    penalty <- lambda*sum(abs(betaFit)) ##why did I do the sqrt
-    ## penalty <- lambda*sum(abs(x))
     ss <- c(rss,penalty)
     sum(ss)
   }
 
+  
 
   res <- nlminb(x0, fun, lower = 0, upper=max(tData)*2, control=list(iter.max = 3000,
                                                           eval.max=4000, rel.tol=10^-14))
@@ -68,6 +78,7 @@ rust.fit.nStt <- function(gData, tData, lambda = 0.01, n.states = 3){
   return(list(fit=res, bic=bicSc, aic=aicSc))
 
 }
+
 
 
 ## ----------[ RUST model (general) state indep ]--------------------
