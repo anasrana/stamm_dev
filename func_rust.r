@@ -83,7 +83,7 @@ rust.fit.nStt <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as='lin
 ##' @param n.states number of states in model
 ##' @return 
 ##' @author anas ahmad rana
-rust.par <- function(gData <- NULL, x, n.states){
+rust.par <- function(gData=NULL, x, n.states){
   ## W matrix from x[1:n-1]
   if(n.states==2){                      
     wFit <- matrix(0, n.states, n.states)
