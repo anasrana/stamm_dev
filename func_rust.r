@@ -1,11 +1,7 @@
 ## ----------[ lodading necessary libraries ]--------------------
 library(stats)
-## library(pracma)                       #library for lsqnonlin
-## library(Matrix)                       #matrix specific functions
 library(matrixStats)                  #use rowSds from library
-#library(pls)                            #use stdize
-library(BB)                             #use for spg
-library(expm)
+library(expm)                           #Matrix exponential also loads library(Matrix)
 
 ## ----------[ Functions for least squares fitting ]----------------------------------------
 ##' .. content for \description{} (no empty lines) ..
@@ -87,7 +83,7 @@ rust.fit.nStt <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as='lin
 ##' @param n.states number of states in model
 ##' @return 
 ##' @author anas ahmad rana
-rust.par <- function(gData, x, n.states){
+rust.par <- function(gData <- NULL, x, n.states){
   ## W matrix from x[1:n-1]
   if(n.states==2){                      
     wFit <- matrix(0, n.states, n.states)
@@ -106,8 +102,10 @@ rust.par <- function(gData, x, n.states){
     lnx <- length(x)
     betaFit <- matrix( x[-c(1:(n.states - 1))], {lnx - n.states + 1}/ n.states, n.states)
   }
-  rownames(betaFit) <- rownames(gData)
-  
+  if(!is.null(gData)){
+    rownames(betaFit) <- rownames(gData)
+  }
+     
   return(list(w=wFit, beta=betaFit))
 }
 

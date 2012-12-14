@@ -8,14 +8,10 @@ load('resultsSim/parametersSim3sttGD.rdat')
 load('resultsSim/plotSet2.rdat')
 
 ## ----------[ running simulation ]--------------------
-dt <- 0.01
-tau <- c(3.5, 5)
-nCells <- 1000
-nStates <- 3
+dt <- 0.01; tau <- c(3.5, 5)
+nCells <- 1000; nStates <- 3; avNoise <- 0.3
 sttNoise <- rep(0.0,nStates)
-avNoise <- 0.3
-t <- seq(1,30, 3)
-tPoints <- t/dt
+t <- seq(1,30, 3); tPoints <- t/dt
 tAll <- seq(dt,30, dt)
 
 ## Forward simulation and writing transition matrix in proper form
