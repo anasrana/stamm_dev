@@ -58,5 +58,25 @@ if(file.exists(trajctFileName)){
   dev.off()
 }
 
+lambdas <- seq(0,0.4, 0.01)
+bic <- NULL
+aic <- NULL
+obj <- NULL
+rss <- NULL
+for(i in 1:6){
+  tmp <- rust.fit.nStt(dat$g[cl.nms,], dat$t, lambda = 0.1, n.states = i, fit.as='log2Dat')
+  bic <- rbind(bic, tmp$bic)
+  aic <- rbind(aic, tmp$aic)
+  obj <- rbind(obj, tmp$fit$objective)
+  rss <- rbind(rss, tmp$rss)
+}
 
-tmp <- rust.fit.nStt(dat$g[rownames(fit3$beta[1:4,]),], dat$t, lambda = 0.1, n.states = 3, fit.as='log2Dat')
+plot(1:6, aic, t='b', ylim=c(min(aic,bic), max(aic,bic)), ylab='objective function', xlab='states')
+lines(1:6, bic, t='b', col='red')
+
+tmp <- rust.fit.nStt(dat$g[cl.nms,], dat$t, lambda = 0.1, n.states = 4, fit.as='log2Dat')
+
+1/tmp$w
+1/fit4$w
+fit4$beta[cl.nms,]
+tmp$beta

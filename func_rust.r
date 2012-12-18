@@ -13,31 +13,30 @@ library(expm)                           #Matrix exponential also loads library(M
 ##' @param lambda L1 penalty parameter (default = 0.01)
 ##' @param n.states number of states in the fitting
 ##' @param fit.as Fitting lin, log2Dat, logDat, log2Al (default = lin)
+##' @param fix.w Logical variable, fit with fixed "W" matrix only the beta parameter if true (default FALSE)
+##' @param w pass the W matrix if 
 ##' @return 
 ##' @author anas ahmad rana
-rust.fit.nStt <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as='lin'){
-  x0 <- runif( (n.states - 1) + nrow(gData) * n.states)
+rust.fit.nStt <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as='lin', fix.w=FALSE, w=NULL){
   p <- nrow(gData)
+  if(fix.w){
+    x0 <- runif( p* n.states)
+  } else if(fix.w==FALSE) {
+    x0 <- runif( (n.states - 1) + nrow(gData) * n.states)
+  }
 
+  ## Function for the fitting procedure
   fun <- function(x){
-    ## initialise w matrix and assign non zero values
-    if(n.states==2){
-      wFit <- matrix(0, n.states, n.states)
-      wFit[2,1] <- x[1]
-    } else if(n.states >=3) {
-      wFit <- matrix(0, n.states, n.states)
-      diag(wFit[-1, ]) <- x[1:(n.states - 1)]
+    tmp <- rust.par(x=x, n.states=n.states, p=p, fix.w=fix.w)
+    if(fix.w){
+      wFit <- w
+    } else {
+      wFit <- tmp$w
     }
+    betaFit <- tmp$beta
 
-    ## Assign other x values to
-    if(n.states==1){
-      betaFit <- matrix( x, p, n.states)
-      fit <- rust.kStt(wFit=NULL, betaFit, tData)
-    } else{
-      lnx <- length(x)
-      betaFit <- matrix( x[-c(1:(n.states - 1))], {lnx - n.states + 1}/ n.states, n.states)
-      fit <- rust.kStt(wFit, betaFit, tData)
-    }
+    fit <- rust.kStt(wFit, betaFit, tData)
+
 
     if(fit.as=='lin'){
       rss <- (fit$S - gData)^2
@@ -56,7 +55,7 @@ rust.fit.nStt <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as='lin
     sum(ss)
   }
 
-  res <- nlminb(x0, fun, lower = 0, upper=max(tData)*2, control=list(iter.max = 3000,
+  res <- nlminb(x0, fun, lower = 0, control=list(iter.max = 3000,
                                                           eval.max=4000, rel.tol=10^-14))
   ## n.states=n.states, lambda=lambda, gData=gData, tData=tData) ##add if using external function
   rss <- res$objective - lambda*sum(res$par[-c(1:(n.states -1))])
@@ -65,12 +64,12 @@ rust.fit.nStt <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as='lin
   n.zeros <- sum(tmpPar==0)
   Df <- p*n.states + n.states -1 - n.zeros
   n <- ncol(gData) * nrow(gData)
-
+  
   bicSc <- n*log(rss/(n-1)) + log(n) * Df
   aicSc <- n*log(rss/(n-1)) + 2 * Df
   par <- rust.par(gData, res$par, n.states)
   
-  return(list(fit=res, w=par$w, beta=par$beta, bic=bicSc, aic=aicSc))
+  return(list(fit=res, w=par$w, beta=par$beta,rss=rss, bic=bicSc, aic=aicSc))
 
 }
 
@@ -83,27 +82,34 @@ rust.fit.nStt <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as='lin
 ##' @param n.states number of states in model
 ##' @return 
 ##' @author anas ahmad rana
-rust.par <- function(gData=NULL, x, n.states){
-  ## W matrix from x[1:n-1]
-  if(n.states==2){                      
-    wFit <- matrix(0, n.states, n.states)
-    wFit[2,1] <- x[1]
-  } else if(n.states >=3) {
-    wFit <- matrix(0, n.states, n.states)
-    diag(wFit[-1, ]) <- x[1:(n.states - 1)]
-  } else {
-    wFit <- NULL
-  }
+rust.par <- function(gData=NULL, x, n.states, p=nrow(gData), fix.w=FALSE){
+  
+  if(fix.w){
 
-  ## Assign other x values to beta
-  if(n.states==1){
     betaFit <- matrix( x, p, n.states)
   } else{
-    lnx <- length(x)
-    betaFit <- matrix( x[-c(1:(n.states - 1))], {lnx - n.states + 1}/ n.states, n.states)
-  }
-  if(!is.null(gData)){
-    rownames(betaFit) <- rownames(gData)
+    ## W matrix from x[1:n-1]
+    if(n.states==2){                      
+      wFit <- matrix(0, n.states, n.states)
+      wFit[2,1] <- x[1]
+    } else if(n.states >=3) {
+      wFit <- matrix(0, n.states, n.states)
+      diag(wFit[-1, ]) <- x[1:(n.states - 1)]
+    } else {
+      wFit <- NULL
+    }
+    
+    ## Assign other x values to beta
+    if(n.states==1){
+      betaFit <- matrix( x, p, n.states)
+    } else{
+      lnx <- length(x)
+      p <- {lnx - n.states + 1}/ n.states
+      betaFit <- matrix( x[-c(1:(n.states - 1))], p, n.states)
+    }
+    if(!is.null(gData)){
+      rownames(betaFit) <- rownames(gData)
+    }
   }
      
   return(list(w=wFit, beta=betaFit))
