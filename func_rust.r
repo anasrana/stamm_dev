@@ -3,6 +3,66 @@ library(stats)
 library(matrixStats)                  #use rowSds from library
 library(expm)                           #Matrix exponential also loads library(Matrix)
 
+
+rust.clst.fit <- function(gData, tData, lambda, n.states, fit.as='log2Dat'){
+  
+
+}
+
+
+##' Clusters genes using k-means and returns centers, cluster rep genes, and random samples from genes
+##'
+##' .. content for \details{} ..
+##' @title rust.clustering
+##' @param gData time course of data
+##' @param km.init number of intialisations for k-means (default value is 100)
+##' @param km.k number of states for clustering
+##' @param rSmpl.size sizes for random samples, if NULL (default) nothing returned
+##' @param n.randSmpl number of random samples for each size (default is 50)
+##' @return clst k-means clustering output important variable is $cluster and $centers
+##' @return rep.gns genes closest to the centroids
+##' @return rnd.sample random samples from gene list without rep.gns
+##' @author anas ahmad rana
+rust.clustering <- function(gData, km.init=100, km.k=NULL, rSmpl.size=NULL, n.randSmpl=50){
+  if(is.null(km.k)){
+    stop('choose number of states km.k') #check in number of clusters is given STOP if not
+  }
+
+  ## Initialise random sample list
+  km.rnd <- NULL
+
+  ## k-means cluster all the genes from the data set
+  tmp.obj <- 10^30
+  for(i.init in 1:km.init){
+    tmp <- kmeans(x=gData, centers=km.k, iter.max=100)
+    tmp.obj <- min(tmp.obj, tmp$tot.withinss)
+    if(tmp.obj == tmp$tot.withinss){
+      cl.kmns <- tmp
+    }
+  }
+  
+  ## Find representative gene clusters
+  rep.gns <- NULL
+  rep.gns <- sapply(as.list(as.data.frame(t(cl.kmns$centers))),
+                    function(x){
+                      rep.gns <- cbind(rep.gns, which.min(apply(abs(gData-x), 1,sum)))
+                    } )
+  rep.gns <- rownames(gData[rep.gns,]) #have gene names instead of index to avoid issues
+
+  ## km.cntrd contains the cluster centers trajectory and rep. gene trajectory
+  km.cntrd <- list(centers=cl.kmns$centers, cent.dat=gData[rep.gns,])
+
+  if(!is.null(rSmpl.size)){
+    for(iR in 1:length(rSmpl.size)){
+      km.rnd <- c(km.rnd, list(replicate(n.randSmpl, sample(x=rownames(gData[!rownames(gData) %in% rep.gns,])
+                                             ,size=rSmpl.size[iR]))))
+                                      
+    }
+  }
+
+  return(list(clst=cl.kmns, rep.gns=rep.gns, rnd.sample=km.rnd))
+}
+
 ## ----------[ Functions for least squares fitting ]----------------------------------------
 ##' .. content for \description{} (no empty lines) ..
 ##'

@@ -80,3 +80,33 @@ tmp <- rust.fit.nStt(dat$g[cl.nms,], dat$t, lambda = 0.1, n.states = 4, fit.as='
 1/fit4$w
 fit4$beta[cl.nms,]
 tmp$beta
+
+## k-means clustering and fitting
+dat.g <- dat$g[dat$ind,]
+
+tmp.obj <- 10^20
+for(j in 1:100){
+  tmp <- kmeans(dat.g, 6, iter.max=100)
+  tmp.obj <- min(tmp.obj, tmp$tot.withinss)
+  if(tmp.obj == tmp$tot.withinss){
+    cl.kmns <- tmp
+  }
+}
+rep.gns <- NULL
+rep.gns <- sapply(as.list(as.data.frame(t(tmp$centers))),
+                  function(x){
+                    rep.gns <- cbind(rep.gns, which.min(apply(abs(dat.g-x), 1,sum)))
+                  } )
+par(mfrow=c(2,1))
+matplot(t(dat$t), t(dat.g[rep.gns,]), t='l')
+
+## Plot centroids
+matplot(t(dat$t), t(cl.kmns$centers), t='l')
+
+cl.bic <- NULL
+cl.rss <- NULL
+for(i in 1:4){
+  cl.fit <- rust.fit.nStt(gData=dat.g[rep.gns,], tData=dat$t[-3], lambda=0.1, n.states=4, fit.as='log2Dat')
+  cl.bic <- cbind(cl.bic, cl.fit$bic)
+  cl.rss <- cbind(cl.rss, cl.fit$rss)
+}
