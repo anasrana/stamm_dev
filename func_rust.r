@@ -294,7 +294,7 @@ rustClustering <- function(time, g, k){
   clst <- kmeans(g,k, nstart=1000)
   matplot(time, t(clst$centers), pch=1, t='b', ylab=NULL)
   
-  return(clsti)
+  return(something)
   
 }
 
