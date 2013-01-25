@@ -299,13 +299,4 @@ rustClustering <- function(time, g, k){
 }
 
   
-plotFit4stt <- function(w,betaFit, tData, gData, gene){
-  t <- seq(t[1],t[length(t)],length=300)
-  fit4stt <- rust4sttFwd(w,betaFit[gene,],t)
-  s <- fit4stt$S
-  plot(t,log2(s), t='l', col='darkgreen', ylim=c(min(log2(s),gData[gene,]),max(log2(s),gData[gene,])),
-       xlab='t [hoursf]', ylab='log_2 (expression)')
-  points(tData, gData[gene,], col='blue', type='b')
-  title(gene)
-}
 
