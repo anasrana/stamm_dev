@@ -2,12 +2,46 @@
 library(stats)
 library(matrixStats)                  #use rowSds from library
 library(expm)                           #Matrix exponential also loads library(Matrix)
+library(multicore)
 
-
-rust.clst.fit <- function(gData, tData, lambda, n.states, fit.as='log2Dat'){
+##' Function to fit w for centroids
+##'
+##' .. content for \details{} ..
+##' @title 
+##' @param gData 
+##' @param tData 
+##' @param lambda 
+##' @param n.states 
+##' @param fit.as 
+##' @param rSmpls 
+##' @return 
+##' @author anas ahmad rana
+rust.clst.fit <- function(gData, tData, lambda, n.states, fit.as='log2Dat', rSmpls){
   
+  cl <- rust.clustering(gData, km.k=6, rSmpl.size=rSmpls, n.randSmpl=10)
+  cl.fit <- rust.fit.nStt(gData=cl$clst$centers, tData=tData, lambda=lambda, n.states=n.states, fit.as=fit.as)
+  bic <- cl.fit$bic
+  aic <- cl.fit$aic
+  rss <- cl.fit$rss
 
+  w <- cl.fit$w
+  beta.centroid <- cl.fit$beta
+  print(paste('w results',w))
+  print('now fitting per gene')
+  for(i in 1:length(cl$rnd.sample)){
+    smpl <- cl$rnd.sample[[i]]
+    for(j in 1:ncol(smpl)){
+      gVec <- as.list(smpl[,j])
+      browser()
+      fit.gnes <- mclapply(gVec, function(x)
+           cl.fit = rust.fit.nStt(gData=gData[x,], tData=tData, lambda=lambda,
+             n.states=n.states, fit.as=fit.as, w=w, fix.w=TRUE))
+    }
+  }
+
+  return(fit.gnes)
 }
+
 
 
 ##' Clusters genes using k-means and returns centers, cluster rep genes, and random samples from genes
@@ -147,6 +181,7 @@ rust.par <- function(gData=NULL, x, n.states, p=nrow(gData), fix.w=FALSE){
   if(fix.w){
 
     betaFit <- matrix( x, p, n.states)
+    return(list(beta=betaFit))
   } else{
     ## W matrix from x[1:n-1]
     if(n.states==2){                      
@@ -170,9 +205,10 @@ rust.par <- function(gData=NULL, x, n.states, p=nrow(gData), fix.w=FALSE){
     if(!is.null(gData)){
       rownames(betaFit) <- rownames(gData)
     }
+    return(list(w=wFit, beta=betaFit))
   }
      
-  return(list(w=wFit, beta=betaFit))
+
 }
 
 ## ----------[ RUST model (general) state indep ]--------------------

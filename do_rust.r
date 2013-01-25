@@ -110,3 +110,6 @@ for(i in 1:4){
   cl.bic <- cbind(cl.bic, cl.fit$bic)
   cl.rss <- cbind(cl.rss, cl.fit$rss)
 }
+save(dat, file='sandraDat.rdat')
+
+
