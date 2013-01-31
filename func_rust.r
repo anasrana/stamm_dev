@@ -1,8 +1,7 @@
 ## ----------[ lodading necessary libraries ]--------------------
-library(stats)
-library(matrixStats)                  #use rowSds from library
-library(expm)                           #Matrix exponential also loads library(Matrix)
-library(multicore)
+library(stats)          #fitting procedure
+library(expm)           #Matrix exponential also loads library(Matrix)
+library(multicore)      #Parallelisation of code
 
 ##' Function to fit w for centroids
 ##'
@@ -14,33 +13,78 @@ library(multicore)
 ##' @param n.states 
 ##' @param fit.as 
 ##' @param rSmpls 
+##' @param fit.pll 
 ##' @return 
 ##' @author anas ahmad rana
-rust.clst.fit <- function(gData, tData, lambda, n.states, fit.as='log2Dat', rSmpls){
+rust.clst.fit <- function(gData, tData, lambda, n.states, fit.as='log2Dat', rSmpls, fit.pll=FALSE){
   
-  cl <- rust.clustering(gData, km.k=6, rSmpl.size=rSmpls, n.randSmpl=10)
-  cl.fit <- rust.fit.kStt(gData=cl$clst$centers, tData=tData, lambda=lambda, n.states=n.states, fit.as=fit.as)
-  bic <- cl.fit$bic
-  aic <- cl.fit$aic
-  rss <- cl.fit$rss
+  ## Cluster gene trajectories
+  cl <- rust.clustering(gData, km.k=6, rSmpl.size=rSmpls, n.randSmpl=10) 
 
-  w <- cl.fit$w
+
+  cl.fit <- rust.fit.kStt(gData=cl$clst$centers, tData=tData, lambda=lambda, n.states=n.states, fit.as=fit.as)
+  ms <- cl.fit$ms
   beta.centroid <- cl.fit$beta
-  print(paste('w results',w))
-  print('now fitting per gene')
+  w <- cl.fit$w
+
+  cat('\n w fitting \n')
+  print(w)
+  cat('\n now fitting per gene \n')
+  cl$rnd.sample
+  betas <- vector('list', length(cl$rnd.sample))
+  rss <- vector('list', length(cl$rnd.sample))
+
   for(i in 1:length(cl$rnd.sample)){
     smpl <- cl$rnd.sample[[i]]
     for(j in 1:ncol(smpl)){
-      gVec <- as.list(smpl[,j])
-      fit.gnes <- lapply(gVec, function(x)
-           cl.fit = rust.fit.kStt(gData=gData[x,], tData=tData, lambda=lambda,
-             n.states=n.states, fit.as=fit.as, w=w, fix.w=TRUE))
+      gVec <- smpl[,j]
+      fit.v <- rust.fit.gnlst(gVec, gData, tData, lambda, n.states, fit.as, w, fit.pll=fit.pll)
     }
   }
-
-  return(fit.gnes)
 }
 
+##' Fits betas for a list of genes given w
+##'
+##' 
+##' @title rust.fit.gnlst
+##' @param gName vector of gene names to be fitted
+##' @param gData data matrix for fitting
+##' @param tData time vector of data points
+##' @param lambda L1 penalty parameter
+##' @param n.states number of states to be fitted
+##' @param fit.as string determining log manipulation of fit
+##' @param w transition matrix
+##' @param fit.pll logical for parallel fitting
+##' @return 
+##' @author anas ahmad rana
+rust.fit.gnlst <- function(gName, gData, tData, lambda, n.states, fit.as, w, fit.pll=FALSE){
+
+  gName <- as.list(gName)
+  if(fit.pll){
+    fit.gnes <- mclapply(gName, function(x)
+                     cl.fit = rust.fit.kStt(gData=gData[x,], tData=tData, lambda=lambda,
+                       n.states=n.states, fit.as=fit.as, w=w, fix.w=TRUE))
+  } else {
+    fit.gnes <- lapply(gName, function(x)
+                         cl.fit = rust.fit.kStt(gData=gData[x,], tData=tData, lambda=lambda,
+                           n.states=n.states, fit.as=fit.as, w=w, fix.w=TRUE))
+  }
+
+  ## take out important information from the fitting data
+  betas <- NULL
+  rss.v <- NULL
+  for(il in 1:length(fit.gnes)){
+    betas <- rbind(betas, fit.gnes[[il]]$beta)
+    rss.v <- c(rss.v, fit.gnes[[il]]$ms)
+  }
+
+  rownames(betas) <- unlist(gName)
+  names(rss.v) <- unlist(gName)
+  rss <- sum(rss.v)
+  
+  return(list(beta=betas, rss.v=rss.v, w=w))
+}
+  
 
 
 ##' Clusters genes using k-means and returns centers, cluster rep genes, and random samples from genes
@@ -174,12 +218,11 @@ rust.fit.kStt <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as='lin
   }
   ##
 
-  res <- nlminb(x0, fun, lower = 0, control=list(iter.max = 3000,
-                                                          eval.max=4000, rel.tol=10^-14))
+  res <- nlminb(x0, fun, lower = 0, control=list(iter.max = 3000, eval.max=4000, rel.tol=10^-14))
   par <- rust.par(gData, res$par, n.states, fix.w=fix.w, wFit=w)
   
   
-  Df <- sum(par$beta>10^-3)
+
   n <- ncol(gData) * nrow(gData)
   
   if(fix.w){
@@ -188,13 +231,29 @@ rust.fit.kStt <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as='lin
     names(obj) <- 'rss'
   } else {
     rss <- res$objective - lambda*sum(res$par[-c(1:(n.states -1))])
-    bicSc <- n*log(rss/(n-1)) + log(n) * Df
-    aicSc <- n*log(rss/(n-1)) + 2 * Df
-    obj <- c(rss, bicSc, aicSc)
-    names(obj) <- c('rss', 'bic', 'aic')
+    obj <- rust.bic(rss, n, par$beta)
+    
   }
 
-  return(list(fit=res, w=par$w, beta=par$beta, obj=obj))
+  return(list(fit=res, w=par$w, beta=par$beta, ms=obj))
+}
+
+##' Calculates BIC and AIC 
+##'
+##' BIC and AIC calculated for least squared fit
+##' @title rust.bic
+##' @param rss The residual sum of squares of the fit
+##' @param n numer of data points used when fitting
+##' @param beta the number of parameters used to calculate Df
+##' @return vector of rss bic and aic
+##' @author anas ahmad rana
+rust.bic <- function(rss, n, beta){
+  Df <- sum(beta>10^-3)
+  bicSc <- n*log(rss/(n-1)) + log(n) * Df
+  aicSc <- n*log(rss/(n-1)) + 2 * Df
+  ms <- c(rss, bicSc, aicSc)
+  names(ms) <- c('rss', 'bic', 'aic')
+  return(ms)
 }
 
 ##' Reshapes parameter vecot, x, into beta matrix and w matrix (or only beta matrix)
