@@ -14,33 +14,105 @@ library(multicore)      #Parallelisation of code
 ##' @param fit.as 
 ##' @param rSmpls 
 ##' @param fit.pll 
+##' @param n.smpl 
+##' @param reps 
 ##' @return 
 ##' @author anas ahmad rana
-rust.clst.fit <- function(gData, tData, lambda, n.states, fit.as='log2Dat', rSmpls, fit.pll=FALSE){
+rust.clst.fit <- function(gData, tData, lambda, n.states, fit.as='log2Dat', rSmpls,
+                          fit.pll=FALSE, n.smpl=10,reps=2){
   
   ## Cluster gene trajectories
   cl <- rust.clustering(gData, km.k=6, rSmpl.size=rSmpls, n.randSmpl=10) 
 
-
-  cl.fit <- rust.fit.kStt(gData=cl$clst$centers, tData=tData, lambda=lambda, n.states=n.states, fit.as=fit.as)
-  ms <- cl.fit$ms
-  beta.centroid <- cl.fit$beta
-  w <- cl.fit$w
-
-  cat('\n w fitting \n')
-  print(w)
-  cat('\n now fitting per gene \n')
-  cl$rnd.sample
-  betas <- vector('list', length(cl$rnd.sample))
-  rss <- vector('list', length(cl$rnd.sample))
-
-  for(i in 1:length(cl$rnd.sample)){
-    smpl <- cl$rnd.sample[[i]]
-    for(j in 1:ncol(smpl)){
-      gVec <- smpl[,j]
-      fit.v <- rust.fit.gnlst(gVec, gData, tData, lambda, n.states, fit.as, w, fit.pll=fit.pll)
+  if(length(n.states)==1){
+    ## Fit the cluster centroids to fix w
+    ms.rss <-  10^10
+    for(is in 1:reps){
+      tmp.fit <- rust.fit.kStt(gData=cl$clst$centers, tData=tData, lambda=lambda,
+                               n.states=n.states, fit.as=fit.as)
+      if(tmp.fit$ms[1]<ms.rss){
+        cl.fit <- tmp.fit
+        ms.rss <- tmp.fit$ms[1]
+      }
     }
+    ms <- cl.fit$ms
+    beta.centroid <- cl.fit$beta
+    w <- cl.fit$w
+
+    cat('\ntransition_rates_fit= \n')
+    print(diag(w[-1,]))
+    cat('\nrss = \n')
+    print(ms[1])
+    cat('\n now fitting per gene \n')
+    cl$rnd.sample
+    betas <- vector('list', length(cl$rnd.sample))
+    rss <- vector('list', length(cl$rnd.sample))
+    aic <- matrix(0,length(cl$rnd.sample), n.smpl)
+    bic <- matrix(0,length(cl$rnd.sample), n.smpl)
+    rss <- matrix(0,length(cl$rnd.sample), n.smpl)
+
+    for(i in 1:length(cl$rnd.sample)){
+      smpl <- cl$rnd.sample[[i]]
+      for(j in 1:ncol(smpl)){
+        gVec <- smpl[,j]
+        fit.v <- rust.fit.gnlst(gVec, gData, tData, lambda, n.states, fit.as, w, fit.pll=fit.pll)
+        rss[i,j] <- fit.v$ms[1]
+        bic[i,j] <- fit.v$ms[2]
+        aic[i,j] <- fit.v$ms[3]
+      }
+    }
+    ms.stts <- list(rss=rss, bic=bic, aic=aic)
+  } else if(length(n.states)>1) {
+    ## Fit the cluster centroids to fix w
+    ms.stts <- vector('list', length(n.states))
+    names(ms.stts) <- paste('stt',n.states, sep='')
+    for(i.s in 1:length(n.states)){
+      n.stt <- n.states[i.s]
+          ms.rss <-  10^10
+          for(is in 1:reps){
+            tmp.fit <- rust.fit.kStt(gData=cl$clst$centers, tData=tData, lambda=lambda,
+                                     n.states=n.stt, fit.as=fit.as)
+            if(tmp.fit$ms[1]<ms.rss){
+              cl.fit <- tmp.fit
+              ms.rss <- tmp.fit$ms[1]
+            }
+          }
+          ms <- cl.fit$ms
+          beta.centroid <- cl.fit$beta
+          w <- cl.fit$w
+
+          cat('\ntransition_rates_fit= \n')
+          print(diag(w[-1,]))
+          cat('\nrss = \n')
+          print(ms[1])
+          cat('\n now fitting per gene \n')
+          cl$rnd.sample
+          betas <- vector('list', length(cl$rnd.sample))
+          rss <- vector('list', length(cl$rnd.sample))
+          aic <- matrix(0,length(cl$rnd.sample), n.smpl)
+          bic <- matrix(0,length(cl$rnd.sample), n.smpl)
+          rss <- matrix(0,length(cl$rnd.sample), n.smpl)
+
+
+      for(i in 1:length(cl$rnd.sample)){
+        smpl <- cl$rnd.sample[[i]]
+        for(j in 1:ncol(smpl)){
+          gVec <- smpl[,j]
+          fit.v <- rust.fit.gnlst(gVec, gData, tData, lambda, n.states=n.stt, fit.as, w, fit.pll=fit.pll)
+          rss[i,j] <- fit.v$ms[1]
+          bic[i,j] <- fit.v$ms[2]
+          aic[i,j] <- fit.v$ms[3]
+        }
+      }
+      rownames(rss) <- rSmpls
+      rownames(bic) <- rSmpls
+      rownames(aic) <- rSmpls
+      ms.stts[[i.s]] <- list(rss=rss, bic=bic, aic=aic)
+    }
+    
   }
+  
+  return(list(ms.cl=ms.stts, states=n.states, sample.N=rSmpls))
 }
 
 ##' Fits betas for a list of genes given w
@@ -81,8 +153,10 @@ rust.fit.gnlst <- function(gName, gData, tData, lambda, n.states, fit.as, w, fit
   rownames(betas) <- unlist(gName)
   names(rss.v) <- unlist(gName)
   rss <- sum(rss.v)
+  n <- ncol(gData)*nrow(betas)
+  ms <- rust.bic(rss, n, betas)
   
-  return(list(beta=betas, rss.v=rss.v, w=w))
+  return(list(beta=betas, rss.v=rss.v, w=w, ms=ms))
 }
   
 
@@ -218,7 +292,7 @@ rust.fit.kStt <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as='lin
   }
   ##
 
-  res <- nlminb(x0, fun, lower = 0, control=list(iter.max = 3000, eval.max=4000, rel.tol=10^-14))
+  res <- nlminb(x0, fun, lower=0, control=list(iter.max = 10000, eval.max=7000, rel.tol=10^-14, sing.tol=10.^-7))
   par <- rust.par(gData, res$par, n.states, fix.w=fix.w, wFit=w)
   
   
