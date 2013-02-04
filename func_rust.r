@@ -22,98 +22,92 @@ rust.clst.fit <- function(gData, tData, lambda, n.states, fit.as='log2Dat', rSmp
                           fit.pll=FALSE, n.smpl=10,reps=2){
   
   ## Cluster gene trajectories
-  cl <- rust.clustering(gData, km.k=6, rSmpl.size=rSmpls, n.randSmpl=10) 
+  cl <- rust.clustering(gData, km.k=6)
+  rnd.sample <- rust.sampl(gData, rSmpl.size=rSmpls, n.randSmpl=10) 
 
   if(length(n.states)==1){
+
     ## Fit the cluster centroids to fix w
-    ms.rss <-  10^10
-    for(is in 1:reps){
-      tmp.fit <- rust.fit.kStt(gData=cl$clst$centers, tData=tData, lambda=lambda,
-                               n.states=n.states, fit.as=fit.as)
-      if(tmp.fit$ms[1]<ms.rss){
-        cl.fit <- tmp.fit
-        ms.rss <- tmp.fit$ms[1]
-      }
-    }
-    ms <- cl.fit$ms
-    beta.centroid <- cl.fit$beta
-    w <- cl.fit$w
-
-    cat('\ntransition_rates_fit= \n')
-    print(diag(w[-1,]))
-    cat('\nrss = \n')
-    print(ms[1])
-    cat('\n now fitting per gene \n')
-    cl$rnd.sample
-    betas <- vector('list', length(cl$rnd.sample))
-    rss <- vector('list', length(cl$rnd.sample))
-    aic <- matrix(0,length(cl$rnd.sample), n.smpl)
-    bic <- matrix(0,length(cl$rnd.sample), n.smpl)
-    rss <- matrix(0,length(cl$rnd.sample), n.smpl)
-
-    for(i in 1:length(cl$rnd.sample)){
-      smpl <- cl$rnd.sample[[i]]
-      for(j in 1:ncol(smpl)){
-        gVec <- smpl[,j]
-        fit.v <- rust.fit.gnlst(gVec, gData, tData, lambda, n.states, fit.as, w, fit.pll=fit.pll)
-        rss[i,j] <- fit.v$ms[1]
-        bic[i,j] <- fit.v$ms[2]
-        aic[i,j] <- fit.v$ms[3]
-      }
-    }
-    ms.stts <- list(rss=rss, bic=bic, aic=aic)
+    ct.fit <- rust.centroid.fit(dat.cntrd=cl$clst$centers, t.dat=tData, lambda, n.stt=n.states, fit.as, rSmpls,
+                                rand.sample=rnd.sample, reps=reps, n.smpl=n.smpl, fit.pll=fit.pll, gData=gData)
+    ms.stts <- list(rss=ct.fit$rss, bic=ct.fit$bic, aic=ct.fit$aic)
   } else if(length(n.states)>1) {
     ## Fit the cluster centroids to fix w
     ms.stts <- vector('list', length(n.states))
     names(ms.stts) <- paste('stt',n.states, sep='')
     for(i.s in 1:length(n.states)){
       n.stt <- n.states[i.s]
-          ms.rss <-  10^10
-          for(is in 1:reps){
-            tmp.fit <- rust.fit.kStt(gData=cl$clst$centers, tData=tData, lambda=lambda,
-                                     n.states=n.stt, fit.as=fit.as)
-            if(tmp.fit$ms[1]<ms.rss){
-              cl.fit <- tmp.fit
-              ms.rss <- tmp.fit$ms[1]
-            }
-          }
-          ms <- cl.fit$ms
-          beta.centroid <- cl.fit$beta
-          w <- cl.fit$w
+      ms.rss <-  10^10
 
-          cat('\ntransition_rates_fit= \n')
-          print(diag(w[-1,]))
-          cat('\nrss = \n')
-          print(ms[1])
-          cat('\n now fitting per gene \n')
-          cl$rnd.sample
-          betas <- vector('list', length(cl$rnd.sample))
-          rss <- vector('list', length(cl$rnd.sample))
-          aic <- matrix(0,length(cl$rnd.sample), n.smpl)
-          bic <- matrix(0,length(cl$rnd.sample), n.smpl)
-          rss <- matrix(0,length(cl$rnd.sample), n.smpl)
-
-
-      for(i in 1:length(cl$rnd.sample)){
-        smpl <- cl$rnd.sample[[i]]
-        for(j in 1:ncol(smpl)){
-          gVec <- smpl[,j]
-          fit.v <- rust.fit.gnlst(gVec, gData, tData, lambda, n.states=n.stt, fit.as, w, fit.pll=fit.pll)
-          rss[i,j] <- fit.v$ms[1]
-          bic[i,j] <- fit.v$ms[2]
-          aic[i,j] <- fit.v$ms[3]
-        }
-      }
-      rownames(rss) <- rSmpls
-      rownames(bic) <- rSmpls
-      rownames(aic) <- rSmpls
-      ms.stts[[i.s]] <- list(rss=rss, bic=bic, aic=aic)
+      ct.fit <- rust.centroid.fit(dat.cntrd=cl$clst$centers, t.dat=tData, lambda, n.stt, fit.as, reps=reps)
+      ms.stts[[i.s]] <- list(rss=ct.fit$rss, bic=ct.fit$bic, aic=ct.fit$aic)
     }
-    
   }
   
   return(list(ms.cl=ms.stts, states=n.states, sample.N=rSmpls))
 }
+
+ 
+##' .. content for \description{} (no empty lines) ..
+##'
+##' .. content for \details{} ..
+##' @title 
+##' @param dat.cntrd 
+##' @param t.dat 
+##' @param lambda 
+##' @param n.stt 
+##' @param fit.as 
+##' @param rand.sample 
+##' @param gData 
+##' @param reps 
+##' @param n.smpl 
+##' @param fit.pll 
+##' @return 
+##' @author anas ahmad rana
+rust.centroid.fit <- function(dat.cntrd, t.dat, lambda, n.stt, fit.as, rSmpls, rand.sample,
+                              gData, reps, n.smpl, fit.pll){
+  ms.rss <-  10^10
+  for(is in 1:reps){
+    tmp.fit <- rust.fit.kStt(gData=dat.cntrd, tData=t.dat, lambda=lambda, n.states=n.stt, fit.as=fit.as)
+    if(tmp.fit$ms[1]<ms.rss){
+      cl.fit <- tmp.fit
+      ms.rss <- tmp.fit$ms[1]
+    }
+  }
+  ms <- cl.fit$ms
+  beta.centroid <- cl.fit$beta
+  w <- cl.fit$w
+
+  cat('\ntransition_rates_fit= \n')
+  if(n.stt>2)
+    print(diag(w[-1,]))
+  else
+    print(w)
+  cat('\nrss = \n')
+  print(ms[1])
+  cat('\n now fitting genes \n')
+
+  aic <- matrix(0,length( rand.sample), n.smpl)
+  bic <- matrix(0,length( rand.sample), n.smpl)
+  rss <- matrix(0,length( rand.sample), n.smpl)
+
+  for(i in 1:length(rand.sample)){
+    smpl <- rand.sample[[i]]
+    for(j in 1:ncol(smpl)){
+      gVec <- smpl[,j]
+      fit.v <- rust.fit.gnlst(gVec, gData=gData, tData=t.dat, lambda, n.states=n.stt, fit.as, w, fit.pll=fit.pll)
+      rss[i,j] <- fit.v$ms[1]
+      bic[i,j] <- fit.v$ms[2]
+      aic[i,j] <- fit.v$ms[3]
+    }
+  }
+  rownames(rss) <- paste('samples',rSmpls,sep='')
+  rownames(bic) <- paste('samples',rSmpls,sep='')
+  rownames(aic) <- paste('samples',rSmpls,sep='')
+  return(list(rss=rss, bic=bic, aic=aic, w=w))
+}
+
+                              
 
 ##' Fits betas for a list of genes given w
 ##'
@@ -132,6 +126,7 @@ rust.clst.fit <- function(gData, tData, lambda, n.states, fit.as='log2Dat', rSmp
 rust.fit.gnlst <- function(gName, gData, tData, lambda, n.states, fit.as, w, fit.pll=FALSE){
 
   gName <- as.list(gName)
+
   if(fit.pll){
     fit.gnes <- mclapply(gName, function(x)
                      cl.fit = rust.fit.kStt(gData=gData[x,], tData=tData, lambda=lambda,
@@ -174,13 +169,13 @@ rust.fit.gnlst <- function(gName, gData, tData, lambda, n.states, fit.as, w, fit
 ##' @return rep.gns genes closest to the centroids
 ##' @return rnd.sample random samples from gene list without rep.gns
 ##' @author anas ahmad rana
-rust.clustering <- function(gData, km.init=100, km.k=NULL, rSmpl.size=NULL, n.randSmpl=50){
+rust.clustering <- function(gData, km.init=100, km.k=NULL, rSmpl.size=NULL){
   if(is.null(km.k)){
     stop('choose number of states km.k') #check in number of clusters is given STOP if not
   }
 
   ## Initialise random sample list
-  km.rnd <- NULL
+
 
   ## k-means cluster all the genes from the data set
   tmp.obj <- 10^30
@@ -203,16 +198,34 @@ rust.clustering <- function(gData, km.init=100, km.k=NULL, rSmpl.size=NULL, n.ra
   ## km.cntrd contains the cluster centers trajectory and rep. gene trajectory
   km.cntrd <- list(centers=cl.kmns$centers, cent.dat=gData[rep.gns,])
 
-  if(!is.null(rSmpl.size)){
+  return(list(clst=cl.kmns, rep.gns=rep.gns))
+ }
+
+##' .. content for \description{} (no empty lines) ..
+##'
+##' .. content for \details{} ..
+##' @title 
+##' @param gData 
+##' @param rSmpl.size 
+##' @return 
+##' @author anas ahmad rana
+rust.sampl <- function(gData, rSmpl.size, n.randSmpl, rep.gns=NULL){
+  km.rnd <- NULL
+  if(!is.null(rep.gns)){
     for(iR in 1:length(rSmpl.size)){
       km.rnd <- c(km.rnd, list(replicate(n.randSmpl, sample(x=rownames(gData[!rownames(gData) %in% rep.gns,])
-                                             ,size=rSmpl.size[iR]))))
+                                                            ,size=rSmpl.size[iR]))))
     }
+  } else {
+   for(iR in 1:length(rSmpl.size)){
+     km.rnd <- c(km.rnd, list(replicate(n.randSmpl, sample(x=rownames(gData),size=rSmpl.size[iR]))))
+   }
   }
-
-  return(list(clst=cl.kmns, rep.gns=rep.gns, rnd.sample=km.rnd))
+  
+  return(km.rnd)
 }
 
+                       
 ## ******************************************************************************************
 ## ----------[ Functions for least squares fitting ]----------------------------------------
 ## ******************************************************************************************

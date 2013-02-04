@@ -27,3 +27,13 @@ matplot(ctof, nF, t='l')
 sa <- stack(as.data.frame(nF))
 sa$cutof <- ctof
 qplot(cutof, values, data=sa, group=ind, colour=ind, geom='line')
+
+## Testing single gene fit
+source('func_rust.r')
+rust.fit.kStt(gData=g.tmp[1,], tData=dat$t, lambda = 0.01, n.states = 4, fit.as='log2Dat', fix.w=TRUE, w=w)
+
+
+## Mclust for clustering
+library(mclust)
+tmp <- Mclust(data=dat$g[dat$ind[1:1000],], G=1:30, modelNames=c('EII', 'VII', 'VVI', 'VEI'))
+plot(tmp)
