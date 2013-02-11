@@ -310,7 +310,7 @@ rust.fit.kStt <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as='lin
   
   
 
-  n <- ncol(gData) * nrow(gData)
+  n <- ncol(gData)
   
   if(fix.w){
     rss <- res$objective - lambda*sum(res$par)

@@ -37,3 +37,27 @@ rust.fit.kStt(gData=g.tmp[1,], tData=dat$t, lambda = 0.01, n.states = 4, fit.as=
 library(mclust)
 tmp <- Mclust(data=dat$g[dat$ind[1:1000],], G=1:30, modelNames=c('EII', 'VII', 'VVI', 'VEI'))
 plot(tmp)
+
+
+## Check simulations
+library(ggplot2)
+source('func_simRust.r')
+
+dt <- 0.01
+n.stt <- 4
+n.gn <- 10
+betas <- rnbinom(n.stt*n.gn, 1, 0.3 )
+
+
+tmp.sim <- rust.simSnglCl(nCells = 1000,nGenes = n.gn, tau = c(3.5,8,14.5), nStates = n.stt,
+                          betaVec=betas, dt = dt, endTime = 30, avNoise=0.01)
+str(tmp.sim)
+
+sim1 <- tmp.sim
+save(sim1,file = '../data/sim1.rdat')
+
+
+sa <- stack(as.data.frame(t(tmp.sim$gsim)))
+sa$t <- seq(1*dt, 3000*dt, dt)
+
+qplot(t, values, data=sa, geom='line', colour=ind, group=ind)
