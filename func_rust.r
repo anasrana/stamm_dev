@@ -398,8 +398,8 @@ rust.par <- function(gData=NULL, x, n.states, p=nrow(gData), fix.w=FALSE, wFit=N
 
 
 ## ----------[ RUST model (general) state indep ]--------------------
-##' Function that takes as arguments the w_fit matrix, the beta_fit matrix and time points, it then calculates a
-##' trajectory
+##' Function that takes as arguments the w_fit matrix, the beta_fit matrix and time
+##' points, it then calculates a trajectory
 ##'
 ##' 
 ##' @title rust.kStt
