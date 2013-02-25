@@ -64,8 +64,8 @@ rust.simSnglCl <- function(nCells = 200,nGenes = 9, tau = c(3.5,5,14.5), nStates
   ## Add gaussian noise to the data
   datasim <- log(gSim) + matrix(rnorm(length(gSim), sd=avNoise), dim(gSim))
   dataSim <- exp(datasim)
-  ## Return values are full simulated data all time points, beta and if t given gSim with t-pts
-  ## return all parameters used for this simulation
+  ## Return values are full simulated data all time points, beta and if t given gSim
+  ## with t-pts return all parameters used for this simulation
   return(list(gsim=gSim, beta=betaVals, dataSim=dataSim, n.cells=nCells, n.gns=nGenes, tau=tau, dt=dt,
               n.stt=nStates, ns.av=avNoise)) 
 }

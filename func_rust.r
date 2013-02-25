@@ -28,8 +28,10 @@ rust.clst.fit <- function(gData, tData, lambda, n.states, fit.as='log2Dat', rSmp
   if(length(n.states)==1){
 
     ## Fit the cluster centroids to fix w
-    ct.fit <- rust.centroid.fit(dat.cntrd=cl$clst$centers, t.dat=tData, lambda, n.stt=n.states, fit.as, rSmpls,
-                                rand.sample=rnd.sample, reps=reps, n.smpl=n.smpl, fit.pll=fit.pll, gData=gData)
+    ct.fit <- rust.centroid.fit(dat.cntrd=cl$clst$centers, t.dat=tData, lambda,
+                                n.stt=n.states, fit.as, rSmpls, rand.sample=rnd.sample,
+                                reps=reps, n.smpl=n.smpl, fit.pll=fit.pll, gData=gData)
+    
     ms.stts <- list(rss=ct.fit$rss, bic=ct.fit$bic, aic=ct.fit$aic)
   } else if(length(n.states)>1) {
     ## Fit the cluster centroids to fix w
@@ -226,9 +228,9 @@ rust.sampl <- function(gData, rSmpl.size, n.randSmpl, rep.gns=NULL){
 }
 
                        
-## ******************************************************************************************
-## ----------[ Functions for least squares fitting ]----------------------------------------
-## ******************************************************************************************
+## ****************************************************************************************
+## ----------[ Functions for least squares fitting ]---------------------------------------
+## ****************************************************************************************
 ##' Fits data to aggregate Markov Chain model
 ##'
 ##' .. content for \details{} ..
@@ -237,13 +239,16 @@ rust.sampl <- function(gData, rSmpl.size, n.randSmpl, rep.gns=NULL){
 ##' @param tData time points of data
 ##' @param lambda L1 penalty parameter (default = 0.01)
 ##' @param n.states number of states in the fitting
-##' @param fit.as Fitting lin, log2Dat, logDat, log2Al (default = lin)
-##' @param fix.w Logical variable, fit with fixed "W" matrix only the beta parameter if true (default FALSE)
+##' @param fit.as Fitting lin, log2Dat, logDat, log2Al (default = 'lin')
+##' @param fix.w Logical variable, fit with fixed "W" matrix only the beta parameter
+##' if true (default FALSE)
 ##' @param w pass the W matrix if 
-##' @return The function returns fit which is returned from the fitting function. It returns the fitted $w$ matrix
-##' and the $/beta$ matrix. It also returns a  obj vector that contains the rss, bic and aic scores for the fit.
+##' @return The function returns fit which is returned from the fitting function.
+##' It returns the fitted $w$ matrix and the $/beta$ matrix. It also returns a  obj vector
+##' that contains the rss, bic and aic scores for the fit.
 ##' @author anas ahmad rana
-rust.fit.kStt <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as='lin', fix.w=FALSE, w=NULL){
+rust.fit.kStt <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as='lin',
+                          fix.w=FALSE, w=NULL){
   p <- nrow(gData)
   if(fix.w){
     p <- 1
@@ -253,6 +258,9 @@ rust.fit.kStt <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as='lin
     x0 <- runif( (n.states - 1) + nrow(gData) * n.states)
     wFit <- NULL
   }
+
+  if(0 %in% gData & fit.as %in% c('log2Dat', 'logDat', 'log2Al'))
+    gData = gData+1
 
   ## Functions for the fitting procedure depending on how to fit
   if(fit.as=='lin'){
@@ -412,7 +420,6 @@ rust.kStt <- function(wFit = NULL, betaFit, t){
     ## initial condition
     p0 <- rep(0,k); p0[1] <- 1
     P <- NULL
-
     for(i in 1:n){
       pt <- expm::expm(wFit *t[i], method='Ward77') %*% p0
       P <- cbind(P, pt)
