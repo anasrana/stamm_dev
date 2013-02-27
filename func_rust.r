@@ -452,7 +452,7 @@ rust.fit.kStt.norm <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as
   if(0 %in% gData & fit.as %in% c('log2Dat', 'logDat', 'log2Al'))
     gData = gData+1
   
-  g.sd <- apply(log2(gData), 1, sd)
+  g.sd <- apply(gData, 1, sd)
 
   ## Functions for the fitting procedure depending on how to fit
   if(fit.as=='lin'){
@@ -494,7 +494,7 @@ rust.fit.kStt.norm <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as
       wFit <- tmp$w
       betaFit <- tmp$beta
       fit <- rust.kStt(wFit, betaFit, tData)
-      rss <- ((log2(fit$y) - log2(gData))^2)/g.sd
+      rss <- ((log2(fit$y) - log2(gData))/g.sd)^2
       penalty <- lambda*sum(abs(betaFit)) 
       ss <- c(rss,penalty)
       sum(ss)
