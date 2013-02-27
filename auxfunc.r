@@ -10,19 +10,20 @@ require(grid)
 ##' @param b.fit beta matrix from fitting
 ##' @return 
 ##' @author anas ahmad rana
-rust.comp.B <- function(b.sim, b.fit){
+plot.comp.beta.rust <- function(b.sim, b.fit){
 
   p <- nrow(b.sim)
   k <- ncol(b.sim)
-  b.val <- data.frame(beta=c(as.vector(b.sim), as.vector(b.fit)), tp=rep(c('sim', 'fit'), each=p*k), stt=rep(1:k, 2*p), gn=rep(c(rownames(b.sim), rownames(b.fit)), each=k))
+  b.val <- data.frame(beta=c(as.vector(b.sim), as.vector(b.fit)), tp=rep(c('sim', 'fit'), each=p*k), stt=rep(rep(1:k, each=p),2), gn=rep(c(rownames(b.sim), rownames(b.fit)), k))
 
 b.g <- ggplot(b.val) +
-    geom_bar(aes(x=stt, y=beta, alpha=factor(tp), fill=factor(stt)),position='dodge', stat='identity') +
+    geom_bar(aes(x=stt, y=beta, alpha=factor(tp), fill=factor(stt)),
+             position='dodge', stat='identity') +
+          facet_wrap(~gn, scales='free_y') +
       scale_alpha_discrete(range=c(0.5,1)) +
         xlab('States')+
           ylab('beta value') +
-            facet_wrap(~gn, scales='free_y') +
-              theme_bw() +
+                theme_bw() +
                 labs(fill='States', alpha='') +
                   theme(legend.key.size=unit(0.3, 'cm'),
                         legend.text = element_text(size=10, face='bold'),
@@ -30,8 +31,8 @@ b.g <- ggplot(b.val) +
                         axis.title.y = element_text(face='bold', size=20),
                         strip.text.x = element_text(size=12),
                         strip.background = element_rect(colour = NA),
-                        axis.text.x = element_text(size=12),
-                        axis.text.y = element_text(size=12))
+                        axis.text.x = element_text(size=10),
+                        axis.text.y = element_text(size=10))
   return(b.g)
 }
 
@@ -46,7 +47,7 @@ b.g <- ggplot(b.val) +
 ##' @param w fitted w matrix
 ##' @return 
 ##' @author anas ahmad rana
-rust.comp.traj <- function(g.dat, t, b.fit, w){
+plot.comp.traj.rust <- function(g.dat, t, b.fit, w){
 
   if(0 %in% g.dat)
     g.dat = g.dat +1
@@ -73,8 +74,34 @@ rust.comp.traj <- function(g.dat, t, b.fit, w){
   axis.title.y = element_text(face='bold', size=20),
                   strip.text.x = element_text(size=12),
                   strip.background = element_rect(colour = NA),
-  axis.text.x = element_text(size=12),
-  axis.text.y = element_text(size=12))
+  axis.text.x = element_text(size=10),
+  axis.text.y = element_text(size=10))
+
+  return(t.g)
+}
+
+plot.traj.rust <- function(g.dat, t){
+
+  p <- nrow(g.dat)
+  sim.dat <- data.frame(g=as.vector(g.dat), gn = rep(rownames(b.fit), length(t)),
+                        t=rep(t, each=p))
+
+  t.g <- ggplot(sim.dat, aes(x=t, y=g)) +
+    geom_point(size=1.5, col='darkgreen') +
+      geom_line(size=0.2, col='darkgreen') +
+        facet_wrap(~gn, scales='free_y') +
+          theme_bw() +
+            xlab('time') +
+              ylab('gene expression') +
+  theme(legend.key.size=unit(0.3, 'cm'),
+  legend.text = element_text(size=10, face='bold'),
+  axis.title.x = element_text(face='bold', size=20),
+  axis.title.y = element_text(face='bold', size=20),
+                  strip.text.x = element_text(size=12),
+                  strip.background = element_rect(colour = NA),
+  axis.text.x = element_text(size=10),
+  axis.text.y = element_text(size=10))
+
   return(t.g)
 }
 
