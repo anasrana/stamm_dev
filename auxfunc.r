@@ -2,13 +2,13 @@ require(ggplot2)
 require(grid)
 
 ##' Function to show beta values for sim next to beta values for fit
-##' 
 ##'
-##' 
+##'
+##'
 ##' @title rust.comp.B
 ##' @param b.sim beta matrix that was used in the simulation
 ##' @param b.fit beta matrix from fitting
-##' @return 
+##' @return
 ##' @author anas ahmad rana
 plot.comp.beta.rust <- function(b.sim, b.fit){
 
@@ -39,13 +39,13 @@ b.g <- ggplot(b.val) +
 
 ##' Function to plot trajectories of data and fit on top of each other
 ##'
-##' 
+##'
 ##' @title rust.comp.traj
 ##' @param g.dat data used in fitting
 ##' @param t time points of g.dat
 ##' @param b.fit fitted beta values
 ##' @param w fitted w matrix
-##' @return 
+##' @return
 ##' @author anas ahmad rana
 plot.comp.traj.rust <- function(g.dat, t, b.fit, w){
 
@@ -56,7 +56,7 @@ plot.comp.traj.rust <- function(g.dat, t, b.fit, w){
   t.fit <- seq(0,max(t),0.01)
   g.fit <- rust.kStt(w, b.fit, t=t.fit)
   fit.dat <- data.frame(g=as.vector(g.fit$y), gn=rep(rownames(b.fit), length(t.fit)),
-                        t=rep(t.fit, each=p)) 
+                        t=rep(t.fit, each=p))
   sim.dat <- data.frame(g=as.vector(g.dat), gn = rep(rownames(b.fit), length(t)),
                         t=rep(t, each=p))
 
@@ -83,7 +83,7 @@ plot.comp.traj.rust <- function(g.dat, t, b.fit, w){
 plot.traj.rust <- function(g.dat, t){
 
   p <- nrow(g.dat)
-  sim.dat <- data.frame(g=as.vector(g.dat), gn = rep(rownames(b.fit), length(t)),
+  sim.dat <- data.frame(g=as.vector(g.dat), gn = rep(rownames(g.dat), length(t)),
                         t=rep(t, each=p))
 
   t.g <- ggplot(sim.dat, aes(x=t, y=g)) +
