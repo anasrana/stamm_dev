@@ -449,61 +449,72 @@ rust.fit.kStt.norm <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as
     wFit <- NULL
   }
 
-  if(0 %in% gData & fit.as %in% c('log2Dat', 'logDat', 'log2Al'))
-    gData = gData+1
   
-  g.sd <- apply(gData, 1, sd)
+  g.ln <- apply(log2(gData), 1,sd)
+  g.nl <- apply(gData , 1, sd)
+  g.m <- apply(gData, 1, max)
+  g.mm <- (apply(gData, 1, max) -apply(gData, 1, min))
 
+  g.mi <- apply(g.dat, 1, min)
+  
   ## Functions for the fitting procedure depending on how to fit
-  if(fit.as=='lin'){
+  if(fit.as==1){
     fun <- function(x){
       tmp <- rust.par(x=x, n.states=n.states, p=p, fix.w=fix.w, wFit=wFit)
       wFit <- tmp$w
       betaFit <- tmp$beta
       fit <- rust.kStt(wFit, betaFit, tData)
-      rss <- (fit$y - gData)^2
+      rss <- ((log2(fit$y) - log2(gData))/g.ln)^2
       penalty <- lambda*sum(abs(betaFit)) 
       ss <- c(rss,penalty)
       sum(ss)
     }
-  } else if(fit.as=='log2Dat'){
+  } else if(fit.as==2){
     fun <- function(x){
       tmp <- rust.par(x=x, n.states=n.states, p=p, fix.w=fix.w, wFit=wFit)
       wFit <- tmp$w
       betaFit <- tmp$beta
       fit <- rust.kStt(wFit, betaFit, tData)
-      rss <- (log2(fit$y) - gData)^2
+      rss <- (log2(fit$y/g.nl +1) - log2(gData/g.nl +1))^2
       penalty <- lambda*sum(abs(betaFit)) 
       ss <- c(rss,penalty)
       sum(ss)
     }
-  } else if(fit.as=='logDat'){
+  } else if(fit.as==3){
     fun <- function(x){
       tmp <- rust.par(x=x, n.states=n.states, p=p, fix.w=fix.w, wFit=wFit)
       wFit <- tmp$w
       betaFit <- tmp$beta
       fit <- rust.kStt(wFit, betaFit, tData)
-      rss <- (log(fit$y) - gData)^2
+      rss <- (log2(fit$y/g.m +1) - log2(gData/g.m +1))^2
       penalty <- lambda*sum(abs(betaFit)) 
       ss <- c(rss,penalty)
       sum(ss)
     }
-  } else if(fit.as=='log2Al'){
+  } else if(fit.as==4){
     fun <- function(x){
       tmp <- rust.par(x=x, n.states=n.states, p=p, fix.w=fix.w, wFit=wFit)
       wFit <- tmp$w
       betaFit <- tmp$beta
       fit <- rust.kStt(wFit, betaFit, tData)
-      rss <- ((log2(fit$y) - log2(gData))/g.sd)^2
+      rss <- ((log2(fit$y/g.mm +1) - log2(gData/g.mm + 1))/g.sd)^2
       penalty <- lambda*sum(abs(betaFit)) 
       ss <- c(rss,penalty)
       sum(ss)
     }
-
-  } else {
-    stop('String fit.as not recognised')
+  } else if(fit.as==5){
+    fun <- function(x){
+      tmp <- rust.par(x=x, n.states=n.states, p=p, fix.w=fix.w, wFit=wFit)
+      wFit <- tmp$w
+      betaFit <- tmp$beta
+      fit <- rust.kStt(wFit, betaFit, tData)
+      rss <- (log2({{fit$y - g.mi}/g.m} + 1) - log2({{gData - g.mi}/g.m} + 1))^2
+      penalty <- lambda*sum(abs(betaFit)) 
+      ss <- c(rss,penalty)
+      sum(ss)
+    }
   }
-  ##
+
 
   res <- nlminb(x0, fun, lower=0, control=list(iter.max = 10000, eval.max=7000, rel.tol=10^-14, sing.tol=10.^-7))
   par <- rust.par(gData, res$par, n.states, fix.w=fix.w, wFit=w)
