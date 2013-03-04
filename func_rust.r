@@ -440,11 +440,14 @@ rust.kStt <- function(wFit = NULL, betaFit, t){
 rust.fit.kStt.norm <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as='lin',
                           fix.w=FALSE, w=NULL){
   p <- nrow(gData)
-    x0 <- runif(3, max=1)
-    for(i.in in 1:nrow(gData)){
-      x0 <- c(x0, runif(n.states, min = min(gData[i.in,]),max=max(gData[i.in,])))
-    }
-    wFit <- NULL
+  x0 <- runif(3, max=1)
+  tmp.x0 <- NULL
+  for(i.in in 1:nrow(gData)){
+    tmp.x0 <- rbind(tmp.x0, runif(n.states, min = min(gData[i.in,]),
+                                  max = max( gData[i.in,] ) ) )
+  }
+  x0 <- c(x0, as.vector(tmp.x0))
+  wFit <- NULL
 
 
   g.ln <- apply(log2(gData +1), 1,sd)
@@ -518,7 +521,7 @@ rust.fit.kStt.norm <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as
     }
   }
 
-par.scale <- c(rep(1,n.states-1), rep(apply(gData,1,max), each=n.states))
+par.scale <- c(rep(1,n.states-1), rep(apply(gData,1,max), n.states))
 res <- nlminb(start=x0, objective=fun, lower = 0, upper = max(gData), scale=1/par.scale,
               control=list(iter.max = 100000, eval.max=70000, rel.tol=10^-14, sing.tol=10^-10))
   par <- rust.par(gData, res$par, n.states, fix.w=fix.w, wFit=w)

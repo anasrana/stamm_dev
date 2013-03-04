@@ -105,4 +105,31 @@ plot.traj.rust <- function(g.dat, t){
   return(t.g)
 }
 
+plot.beta.rust <- function(b.sim){
+
+  p <- nrow(b.sim)
+  k <- ncol(b.sim)
+  b.val <- data.frame(beta=as.vector(b.sim), stt=rep(1:k, each=p), gn=rep(rownames(b.sim), k))
+
+b.g <- ggplot(b.val) +
+    geom_bar(aes(x=stt, y=beta, fill=factor(stt)),
+             position='dodge', stat='identity') +
+          facet_wrap(~gn, scales='free_y') +
+      scale_alpha_discrete(range=c(0.5,1)) +
+        xlab('States')+
+          ylab('beta value') +
+                theme_bw() +
+                labs(fill='States', alpha='') +
+                  theme(legend.key.size=unit(0.3, 'cm'),
+                        legend.text = element_text(size=10, face='bold'),
+                        axis.title.x = element_text(face='bold', size=20),
+                        axis.title.y = element_text(face='bold', size=20),
+                        strip.text.x = element_text(size=12),
+                        strip.background = element_rect(colour = NA),
+                        axis.text.x = element_text(size=10),
+                        axis.text.y = element_text(size=10))
+  return(b.g)
+}
+
+
 vplayout <- function(x, y)viewport(layout.pos.row = x, layout.pos.col =y)
