@@ -455,11 +455,11 @@ rust.fit.kStt.norm <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as
   g.m <- apply(gData, 1, max)
   g.mm <- (apply(gData, 1, max) -apply(gData, 1, min))
 
-  g.mi <- apply(g.dat, 1, min)
+  g.mi <- apply(gData, 1, min)
 
 
   ## Functions for the fitting procedure depending on how to fit
-  if(fit.as==2){
+  if(fit.as==1){
     fun <- function(x){
       tmp <- rust.par(x=x, n.states=n.states, p=p, fix.w=fix.w, wFit=wFit)
       wFit <- tmp$w
@@ -471,7 +471,7 @@ rust.fit.kStt.norm <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as
       obj <- sum(ss)
       obj
     }
-  } else if(fit.as==1){
+  } else if(fit.as==2){
     fun <- function(x){
       tmp <- rust.par(x=x, n.states=n.states, p=p, fix.w=fix.w, wFit=wFit)
       wFit <- tmp$w
