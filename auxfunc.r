@@ -49,8 +49,6 @@ b.g <- ggplot(b.val) +
 ##' @author anas ahmad rana
 plot.comp.traj.rust <- function(g.dat, t, b.fit, w){
 
-  if(0 %in% g.dat)
-    g.dat = g.dat +1
 
   p <- nrow(b.fit)
   t.fit <- seq(0,max(t),0.01)
