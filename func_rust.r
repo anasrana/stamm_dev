@@ -561,9 +561,7 @@ rust.fit.kStt.pen <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as,
     wFit <- NULL
   }
 
-
-  g.nl <- apply(gData , 1, sd)
-  g.mu <- apply(gData, 1, mean)
+  g.dat.l <- log2(gData + 1)
 
 if(fit.as==1){
     fun <- function(x){
@@ -571,7 +569,7 @@ if(fit.as==1){
       wFit <- tmp$w
       betaFit <- tmp$beta
       fit <- rust.kStt(wFit, betaFit, tData)
-      rss <- ((log2(fit$y/g.nl + 1) - log2(gData/g.nl +1 )))^2
+      rss <- ((log2(fit$y + 1) - g.dat.l))^2
       penalty <- lambda*sum(abs(betaFit))
       ss <- c(rss,penalty)
       obj <- sum(ss)
@@ -583,7 +581,7 @@ if(fit.as==1){
       wFit <- tmp$w
       betaFit <- tmp$beta
       fit <- rust.kStt(wFit, betaFit, tData)
-      rss <- ((log2(fit$y/g.nl + 1) - log2(gData/g.nl +1 )))^2
+      rss <- ((log2(fit$y + 1) - g.dat.l))^2
       penalty <- lambda*sum(abs(betaFit)/g.nl)
       ss <- c(rss,penalty)
       obj <- sum(ss)
@@ -595,7 +593,7 @@ if(fit.as==1){
       wFit <- tmp$w
       betaFit <- tmp$beta
       fit <- rust.kStt(wFit, betaFit, tData)
-      rss <- ((log2(fit$y/g.nl + 1) - log2(gData/g.nl +1 )))^2
+      rss <- ((log2(fit$y + 1) - g.dat.l))^2
       penalty <- lambda*sum(abs(betaFit)/g.mu)
       ss <- c(rss,penalty)
       obj <- sum(ss)
