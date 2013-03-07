@@ -582,7 +582,7 @@ if(fit.as==1){
       betaFit <- tmp$beta
       fit <- rust.kStt(wFit, betaFit, tData)
       rss <- ((log2(fit$y + 1) - g.dat.l))^2
-      penalty <- lambda*sum(abs(betaFit)/g.nl)
+      penalty <- lambda*sum(abs(betaFit))
       ss <- c(rss,penalty)
       obj <- sum(ss)
       obj
@@ -594,7 +594,7 @@ if(fit.as==1){
       betaFit <- tmp$beta
       fit <- rust.kStt(wFit, betaFit, tData)
       rss <- ((log2(fit$y + 1) - g.dat.l))^2
-      penalty <- lambda*sum(abs(betaFit)/g.mu)
+      penalty <- lambda*sum(abs(betaFit))
       ss <- c(rss,penalty)
       obj <- sum(ss)
       obj
