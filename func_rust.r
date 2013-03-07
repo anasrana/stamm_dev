@@ -540,3 +540,190 @@ res <- nlminb(start=x0, objective=fun, lower = 0, upper = max(gData), scale=1/pa
 
   return(list(fit=res, w=par$w, beta=par$beta, ms=obj))
 }
+
+rust.fit.kStt.pen <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as,
+                          fix.w=FALSE, w=NULL){
+
+  p <- nrow(gData)
+  if(fix.w){
+    p <- 1
+    x0 <- runif( p* n.states)
+    wFit <- w
+  } else if(fix.w==FALSE) {
+
+    x0 <- runif(n.states-1, max=1)
+    tmp.x0 <- NULL
+    for(i.in in 1:nrow(gData)){
+      tmp.x0 <- rbind(tmp.x0, runif(n.states, min = min(gData[i.in,]),
+                                    max = max( gData[i.in,] ) ) )
+    }
+    x0 <- c(x0, as.vector(tmp.x0))
+    wFit <- NULL
+  }
+
+
+  g.nl <- apply(gData , 1, sd)
+  g.mu <- apply(gData, 1, mean)
+
+if(fit.as==1){
+    fun <- function(x){
+      tmp <- rust.par(x=x, n.states=n.states, p=p, fix.w=fix.w, wFit=wFit)
+      wFit <- tmp$w
+      betaFit <- tmp$beta
+      fit <- rust.kStt(wFit, betaFit, tData)
+      rss <- ((log2(fit$y/g.nl + 1) - log2(gData/g.nl +1 )))^2
+      penalty <- lambda*sum(abs(betaFit))
+      ss <- c(rss,penalty)
+      obj <- sum(ss)
+      obj
+    }
+  } else if(fit.as==2){
+    fun <- function(x){
+      tmp <- rust.par(x=x, n.states=n.states, p=p, fix.w=fix.w, wFit=wFit)
+      wFit <- tmp$w
+      betaFit <- tmp$beta
+      fit <- rust.kStt(wFit, betaFit, tData)
+      rss <- ((log2(fit$y/g.nl + 1) - log2(gData/g.nl +1 )))^2
+      penalty <- lambda*sum(abs(betaFit)/g.nl)
+      ss <- c(rss,penalty)
+      obj <- sum(ss)
+      obj
+    }
+  }else if(fit.as==3){
+    fun <- function(x){
+      tmp <- rust.par(x=x, n.states=n.states, p=p, fix.w=fix.w, wFit=wFit)
+      wFit <- tmp$w
+      betaFit <- tmp$beta
+      fit <- rust.kStt(wFit, betaFit, tData)
+      rss <- ((log2(fit$y/g.nl + 1) - log2(gData/g.nl +1 )))^2
+      penalty <- lambda*sum(abs(betaFit)/g.mu)
+      ss <- c(rss,penalty)
+      obj <- sum(ss)
+      obj
+    }
+  }
+
+
+par.scale <- c(rep(1,n.states-1), rep(apply(gData,1,max), n.states))
+res <- nlminb(start=x0, objective=fun, lower = 0, upper = max(gData), scale=1/par.scale,
+              control=list(iter.max = 100000, eval.max=70000, rel.tol=10^-14, sing.tol=10^-10))
+  par <- rust.par(gData, res$par, n.states, fix.w=fix.w, wFit=w)
+
+  n <- ncol(gData)
+
+  if(fix.w){
+    rss <- res$objective - lambda*sum(res$par)
+    obj <- rss
+    names(obj) <- 'rss'
+  } else {
+    rss <- res$objective - lambda*sum(res$par[-c(1:(n.states -1))])
+    obj <- rust.bic(rss, n, par$beta)
+
+  }
+
+  return(list(fit=res, w=par$w, beta=par$beta, ms=obj))
+}
+
+rust.fit.kStt.par <- function(gData, tData, lambda = 0.01, n.states = 3, fix.w=FALSE, w=NULL){
+
+  p <- nrow(gData)
+  if(fix.w){
+    p <- 1
+    x0 <- runif( p* n.states)
+    wFit <- w
+  } else if(fix.w==FALSE) {
+
+    x0 <- runif(n.states-1, max=1)
+    tmp.x0 <- NULL
+    for(i.in in 1:nrow(gData)){
+      tmp.x0 <- rbind(tmp.x0, runif(n.states, min = min(gData[i.in,]),
+                                    max = max( gData[i.in,] ) ) )
+    }
+    x0 <- c(x0, as.vector(tmp.x0))
+    wFit <- NULL
+  }
+  g.nl <- apply(gData , 1, sd)
+
+  g.dat.norm <- log2(gData +1 )
+  fun <- function(x){
+    tmp <- rust.par(x=x, n.states=n.states, p=p, fix.w=fix.w, wFit=wFit)
+    wFit <- tmp$w
+    betaFit <- tmp$beta
+    fit <- rust.kStt(wFit, betaFit, tData)
+    rss <- ((log2(fit$y + 1) - g.dat.norm))^2
+    penalty <- lambda*sum(abs(betaFit))
+    ss <- c(rss,penalty)
+    obj <- sum(ss)
+    obj
+  }
+par.scale <- c(rep(1,n.states-1), rep(apply(gData,1,max), n.states))
+res <- nlminb(start=x0, objective=fun, lower = 0, upper = max(gData), scale=1/par.scale,
+              control=list(iter.max = 100000, eval.max=70000, rel.tol=10^-14, sing.tol=10^-10))
+  par <- rust.par(gData, res$par, n.states, fix.w=fix.w, wFit=w)
+
+  n <- ncol(gData)
+
+  if(fix.w){
+    rss <- res$objective - lambda*sum(res$par)
+    obj <- rss
+    names(obj) <- 'rss'
+  } else {
+    rss <- res$objective - lambda*sum(res$par[-c(1:(n.states -1))])
+    obj <- rust.bic(rss, n, par$beta)
+
+  }
+
+  return(list(fit=res, w=par$w, beta=par$beta, ms=obj))
+}
+
+rust.fit.kStt.par.nor <- function(gData, tData, lambda = 0.01, n.states = 3, fix.w=FALSE, w=NULL){
+
+  p <- nrow(gData)
+  if(fix.w){
+    p <- 1
+    x0 <- runif( p* n.states)
+    wFit <- w
+  } else if(fix.w==FALSE) {
+
+    x0 <- runif(n.states-1, max=1)
+    tmp.x0 <- NULL
+    for(i.in in 1:nrow(gData)){
+      tmp.x0 <- rbind(tmp.x0, runif(n.states, min = min(gData[i.in,]),
+                                    max = max( gData[i.in,] ) ) )
+    }
+    x0 <- c(x0, as.vector(tmp.x0))
+    wFit <- NULL
+  }
+  g.nl <- apply(gData , 1, sd)
+
+  g.dat.norm <- log2(gData/g.nl +1 )
+  fun <- function(x){
+    tmp <- rust.par(x=x, n.states=n.states, p=p, fix.w=fix.w, wFit=wFit)
+    wFit <- tmp$w
+    betaFit <- tmp$beta
+    fit <- rust.kStt(wFit, betaFit, tData)
+    rss <- ((log2(fit$y/apply(fit$y, 1, sd) + 1) - g.dat.norm))^2
+    penalty <- lambda*sum(abs(betaFit))
+    ss <- c(rss,penalty)
+    obj <- sum(ss)
+    obj
+  }
+par.scale <- c(rep(1,n.states-1), rep(apply(gData,1,max), n.states))
+res <- nlminb(start=x0, objective=fun, lower = 0, upper = max(gData), scale=1/par.scale,
+              control=list(iter.max = 100000, eval.max=70000, rel.tol=10^-14, sing.tol=10^-10))
+  par <- rust.par(gData, res$par, n.states, fix.w=fix.w, wFit=w)
+
+  n <- ncol(gData)
+
+  if(fix.w){
+    rss <- res$objective - lambda*sum(res$par)
+    obj <- rss
+    names(obj) <- 'rss'
+  } else {
+    rss <- res$objective - lambda*sum(res$par[-c(1:(n.states -1))])
+    obj <- rust.bic(rss, n, par$beta)
+
+  }
+
+  return(list(fit=res, w=par$w, beta=par$beta, ms=obj))
+}
