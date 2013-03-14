@@ -14,10 +14,10 @@ plot.comp.beta.rust <- function(b.sim, b.fit){
 
   p <- nrow(b.sim)
   k <- ncol(b.sim)
-  b.val <- data.frame(beta=c(as.vector(b.sim), as.vector(b.fit)), tp=rep(c('sim', 'fit'), each=p*k), stt=rep(rep(1:k, each=p),2), gn=rep(c(rownames(b.sim), rownames(b.fit)), k))
+  b.val <- data.frame(beta=c(as.vector(b.sim), as.vector(b.fit)), tp=factor(rep(c('sim', 'fit'), each=p*k)), stt=rep(rep(1:k, each=p),2), gn=factor(rep(c(as.numeric(rownames(b.sim)), as.numeric(rownames(b.fit)), k))))
 
 b.g <- ggplot(b.val) +
-    geom_bar(aes(x=stt, y=beta, alpha=factor(tp), fill=factor(stt)),
+    geom_bar(aes(x=stt, y=beta, alpha=tp, fill=stt),
              position='dodge', stat='identity') +
           facet_wrap(~gn, scales='free_y') +
       scale_alpha_discrete(range=c(0.5,1)) +
@@ -53,9 +53,9 @@ plot.comp.traj.rust <- function(g.dat, t, b.fit, w){
   p <- nrow(b.fit)
   t.fit <- seq(0,max(t),0.01)
   g.fit <- rust.kStt(w, b.fit, t=t.fit)
-  fit.dat <- data.frame(g=as.vector(g.fit$y), gn=rep(rownames(b.fit), length(t.fit)),
+  fit.dat <- data.frame(g=as.vector(g.fit$y), gn=factor(rep(as.numeric(rownames(b.fit)), length(t.fit))),
                         t=rep(t.fit, each=p))
-  sim.dat <- data.frame(g=as.vector(g.dat), gn = rep(rownames(b.fit), length(t)),
+  sim.dat <- data.frame(g=as.vector(g.dat), gn = factor(rep(as.numeric(rownames(b.fit)), length(t))),
                         t=rep(t, each=p))
 
   t.g <- ggplot(sim.dat, aes(x=t, y=g)) +
@@ -81,7 +81,7 @@ plot.comp.traj.rust <- function(g.dat, t, b.fit, w){
 plot.traj.rust <- function(g.dat, t){
 
   p <- nrow(g.dat)
-  sim.dat <- data.frame(g=as.vector(g.dat), gn = rep(rownames(g.dat), length(t)),
+  sim.dat <- data.frame(g=as.vector(g.dat), gn = factor(rep(as.numeric(rownames(g.dat)), length(t))),
                         t=rep(t, each=p))
 
   t.g <- ggplot(sim.dat, aes(x=t, y=g)) +
@@ -107,10 +107,10 @@ plot.beta.rust <- function(b.sim){
 
   p <- nrow(b.sim)
   k <- ncol(b.sim)
-  b.val <- data.frame(beta=as.vector(b.sim), stt=rep(1:k, each=p), gn=rep(rownames(b.sim), k))
+  b.val <- data.frame(beta=as.vector(b.sim), stt=factor(rep(1:k, each=p)), gn=factor(rep(as.numeric(rownames(b.sim)), k)))
 
 b.g <- ggplot(b.val) +
-    geom_bar(aes(x=stt, y=beta, fill=factor(stt)),
+    geom_bar(aes(x=stt, y=beta, fill=(stt)),
              position='dodge', stat='identity') +
           facet_wrap(~gn, scales='free_y') +
       scale_alpha_discrete(range=c(0.5,1)) +
