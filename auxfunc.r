@@ -14,7 +14,7 @@ plot.comp.beta.rust <- function(b.sim, b.fit){
 
   p <- nrow(b.sim)
   k <- ncol(b.sim)
-  b.val <- data.frame(beta=c(as.vector(b.sim), as.vector(b.fit)), tp=factor(rep(c('sim', 'fit'), each=p*k)), stt=rep(rep(1:k, each=p),2), gn=factor(rep(c(as.numeric(rownames(b.sim)), as.numeric(rownames(b.fit)), k))))
+  b.val <- data.frame(beta=c(as.vector(b.sim), as.vector(b.fit)), tp=factor(rep(c('sim', 'fit'), each=p*k)), stt=rep(rep(1:k, each=p),2), gn=factor(rep(c( (rownames(b.sim)),  (rownames(b.fit)), k))))
 
 b.g <- ggplot(b.val) +
     geom_bar(aes(x=stt, y=beta, alpha=tp, fill=stt),
@@ -53,9 +53,9 @@ plot.comp.traj.rust <- function(g.dat, t, b.fit, w){
   p <- nrow(b.fit)
   t.fit <- seq(0,max(t),0.01)
   g.fit <- rust.kStt(w, b.fit, t=t.fit)
-  fit.dat <- data.frame(g=as.vector(g.fit$y), gn=factor(rep(as.numeric(rownames(b.fit)), length(t.fit))),
+  fit.dat <- data.frame(g=as.vector(g.fit$y), gn=factor(rep( (rownames(b.fit)), length(t.fit))),
                         t=rep(t.fit, each=p))
-  sim.dat <- data.frame(g=as.vector(g.dat), gn = factor(rep(as.numeric(rownames(b.fit)), length(t))),
+  sim.dat <- data.frame(g=as.vector(g.dat), gn = factor(rep( (rownames(b.fit)), length(t))),
                         t=rep(t, each=p))
 
   t.g <- ggplot(sim.dat, aes(x=t, y=g)) +
@@ -81,7 +81,7 @@ plot.comp.traj.rust <- function(g.dat, t, b.fit, w){
 plot.traj.rust <- function(g.dat, t){
 
   p <- nrow(g.dat)
-  sim.dat <- data.frame(g=as.vector(g.dat), gn = factor(rep(as.numeric(rownames(g.dat)), length(t))),
+  sim.dat <- data.frame(g=as.vector(g.dat), gn = factor(rep( (rownames(g.dat)), length(t))),
                         t=rep(t, each=p))
 
   t.g <- ggplot(sim.dat, aes(x=t, y=g)) +
@@ -107,7 +107,7 @@ plot.beta.rust <- function(b.sim){
 
   p <- nrow(b.sim)
   k <- ncol(b.sim)
-  b.val <- data.frame(beta=as.vector(b.sim), stt=factor(rep(1:k, each=p)), gn=factor(rep(as.numeric(rownames(b.sim)), k)))
+  b.val <- data.frame(beta=as.vector(b.sim), stt=factor(rep(1:k, each=p)), gn=factor(rep( (rownames(b.sim)), k)))
 
 b.g <- ggplot(b.val) +
     geom_bar(aes(x=stt, y=beta, fill=(stt)),
@@ -131,3 +131,24 @@ b.g <- ggplot(b.val) +
 
 
 vplayout <- function(x, y)viewport(layout.pos.row = x, layout.pos.col =y)
+
+plot.cv.lambda.rust <- function(dat.mat, lambda, x.lab='', y.lab=''){
+
+  dat.l <- data.frame(y.val=apply(dat.mat, 1, sum), lambda=lambda)
+  ggplot(dat.l, aes(x=lambda, y=y.val)) +
+    geom_point(size=2) +
+      geom_line(size=1.2) +
+        xlab(x.lab) +
+          ylab(y.lab) +
+            theme_bw() +
+              theme(legend.position = 'none',
+                    axis.title.x = element_text(face='bold', size=20),
+                    axis.title.y = element_text(face='bold', size=20),
+                    axis.text.x = element_text(size=12),
+                    axis.text.y = element_text(size=12),
+                    strip.background = element_rect(colour = NA),
+                    plot.title = element_text(face='bold'))
+
+
+
+}
