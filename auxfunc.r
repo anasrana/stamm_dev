@@ -132,25 +132,42 @@ b.g <- ggplot(b.val) +
 
 vplayout <- function(x, y)viewport(layout.pos.row = x, layout.pos.col =y)
 
-plot.cv.lambda.rust <- function(dat.mat, lambda, x.lab='', y.lab=''){
+plot.cv.lambda.rust <- function(dat.mat, lambda, x.lab='', y.lab='', n.run=1){
 
-  dat.l <- data.frame(y.val=apply(dat.mat, 1, sum), lambda=lambda)
-  ggplot(dat.l, aes(x=lambda, y=y.val)) +
-    geom_point(size=2) +
-      geom_line(size=1.2) +
-        xlab(x.lab) +
-          ylab(y.lab) +
-            theme_bw() +
-              theme(legend.position = 'none',
-                    axis.title.x = element_text(face='bold', size=20),
-                    axis.title.y = element_text(face='bold', size=20),
-                    axis.text.x = element_text(size=12),
-                    axis.text.y = element_text(size=12),
-                    strip.background = element_rect(colour = NA),
-                    plot.title = element_text(face='bold'))
+  if(n.run==1){
+    dat.l <- data.frame(y.val=apply(dat.mat, 1, sum), lambda=lambda)
+    plot.p <- ggplot(dat.l, aes(x=lambda, y=y.val)) +
+      geom_point(size=2) +
+        geom_line(size=1.2) +
+          xlab(x.lab) +
+            ylab(y.lab) +
+              theme_bw() +
+                theme(legend.position = 'none',
+                      axis.title.x = element_text(face='bold', size=20),
+                      axis.title.y = element_text(face='bold', size=20),
+                      axis.text.x = element_text(size=12),
+                      axis.text.y = element_text(size=12),
+                      strip.background = element_rect(colour = NA),
+                      plot.title = element_text(face='bold'))
+  } else if(n.run>1){
+    dat.l <- data.frame(y.val=as.vector(dat.mat), lambda=rep(lambda, ncol(dat.mat)),
+                        nrun=rep(1:ncol(dat.mat), each=nrow(dat.mat)))
+    plot.p <- ggplot(dat.l, aes(x=lambda, y=y.val, col=as.factor(nrun), group=nrun)) +
+      geom_point(size=2) +
+        geom_line(size=1.2) +
+          xlab(x.lab) +
+            ylab(y.lab) +
+              theme_bw() +
+                theme(legend.position = 'none',
+                      axis.title.x = element_text(face='bold', size=20),
+                      axis.title.y = element_text(face='bold', size=20),
+                      axis.text.x = element_text(size=12),
+                      axis.text.y = element_text(size=12),
+                      strip.background = element_rect(colour = NA),
+                      plot.title = element_text(face='bold'))
+  }
 
-
-
+  return(plot.p)
 }
 
 plot.cv.facet.lambda.rust <- function(dat.mat, lambda, x.lab='predicted t-point', y.lab='RSS', t.dat,
@@ -158,7 +175,7 @@ plot.cv.facet.lambda.rust <- function(dat.mat, lambda, x.lab='predicted t-point'
 
   rss.tk <- data.frame(rss=as.vector(rss.mat), lambda=rep(lambda, length(t.dat)-1),
                        t.ko = rep(2:(length(t.dat) ), each=nrow(dat.mat)))
-  ggplot(rss.tk, aes(y=rss)) +
+  plot.p <- ggplot(rss.tk, aes(y=rss)) +
   geom_point(aes(x=t.ko)) +
   geom_line(aes(x=t.ko)) +
   facet_wrap(~lambda) +
@@ -175,7 +192,7 @@ plot.cv.facet.lambda.rust <- function(dat.mat, lambda, x.lab='predicted t-point'
         strip.text.x = element_text(size=10),
         strip.background = element_rect(colour = NA),
         plot.title = element_text(face='bold'))
-
+  return(plot.p)
 }
 
 plot.cv.facet.t.rust <- function(dat.mat, lambda, x.lab='lambda', y.lab='RSS', t.dat,
@@ -183,7 +200,7 @@ plot.cv.facet.t.rust <- function(dat.mat, lambda, x.lab='lambda', y.lab='RSS', t
   rss.tk <- data.frame(rss=as.vector(rss.mat), lambda=rep(lambda, length(t.dat)-1),
                        t.ko = rep(2:(length(t.dat) ), each=nrow(dat.mat)))
 
-  ggplot(rss.tk, aes(y=rss)) +
+  plot.p <- ggplot(rss.tk, aes(y=rss)) +
     geom_point(aes(x=lambda)) +
       geom_line(aes(x=lambda)) +
         facet_wrap(~t.ko) +
@@ -200,7 +217,7 @@ plot.cv.facet.t.rust <- function(dat.mat, lambda, x.lab='lambda', y.lab='RSS', t
                           strip.text.x = element_text(size=10),
                           strip.background = element_rect(colour = NA),
                           plot.title = element_text(face='bold'))
-
+  return(plot.p)
 }
 
 plot.beta.scatter.rust <- function(beta.sc, beta.al, title.g='Scatter plot comparing beta values',
