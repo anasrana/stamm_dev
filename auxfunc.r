@@ -254,3 +254,34 @@ plot.beta.scatter.rust <- function(beta.sc, beta.al, title.g='Scatter plot compa
                                   plot.title = element_text(face='bold'))
   }
 }
+
+## ********************************************************************************
+##   functions that perform very simple calculations but are not
+##   directly related to fitting or simulating
+##   ********************************************************************************
+
+
+rust.cv.rss <- function(fit.file){
+  load(fit.file)
+  load(paste('~/complexity/phd/projects/rust/results/5mar13/sim_varScl_4.rdat',sep='') )
+
+  w.sim <- matrix(0, nrow(fit[[1]][[1]]$w),ncol(fit[[1]][[1]]$w))
+  diag(w.sim[-1,]) <- 1/sim.dat$sim$tau
+
+  rss.mat <- matrix(NA, length(fit), length(t.dat)-1)
+  beta <- matrix(NA, length(fit), length(t.dat)-1)
+  w <- matrix(NA, length(fit), length(t.dat)-1)
+  rss.mat <- matrix(NA, length(fit), length(t.dat)-1)
+  for( i.l in 1:length(fit) ){
+    for( i.t in 2:length(t.dat) ){
+      beta[i.l, i.t-1] <- sum((fit[[i.l]][[i.t]]$beta - sim.dat$beta)^2)
+      w[i.l, i.t-1] <- sum((fit[[i.l]][[i.t]]$w - w.sim)^2)
+      bt <- fit[[i.l]][[i.t]]$beta
+      w.fit <- fit[[i.l]][[i.t]]$w
+      rep.fit <- rust.kStt(w.fit, bt,  t.dat)
+      rss.mat[i.l, i.t-1] <- sum((log2(g.dat[,i.t] + 1) - log2(rep.fit$y[,i.t] +1) )^2 )
+    }
+  }
+
+  return(list(rss = rss.mat, beta = beta, w = w, sim.dat=sim.dat, fit.dat = fit))
+}
