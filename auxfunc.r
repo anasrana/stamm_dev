@@ -152,3 +152,38 @@ plot.cv.lambda.rust <- function(dat.mat, lambda, x.lab='', y.lab=''){
 
 
 }
+
+plot.beta.scatter.rust <- function(beta.sc, beta.al, title='Scatter plot comparing beta values',
+                                   x.lab, b.scl = 'log', lmbd.vec, n.stt=4, n.gn=12){
+
+  if(b.scl=='log'){  #All the beta values below are shifted by one,
+                     #the assumption is that they contain 0 values
+    beta.dm <- data.frame(beta0=rep(beta.sc +1 , ncol(beta.al)), beta=as.vector(beta.al +1),
+                          lambda = rep(lmbd.vec, each=nrow(beta.al)),
+                          stt=as.factor(rep(rep(1:n.stt, each =n.gn),ncol(beta.al))),
+                          gn=as.factor(rep(1:n.gn, n.stt*ncol(beta.al))) )
+
+    beta.scl <- c(1, 10^seq(2, ceiling(max(log10(beta.al))), 2) +1)
+    beta.lbl <- c(0, 10^seq(2, ceiling(max(log10(beta.al))), 2) )
+
+    ggplot(beta.dm, aes(x=beta0, y=beta)) +
+      geom_point(aes(colour=gn, size=stt)) +
+        scale_colour_brewer(palette="Paired") +
+          facet_wrap(~lambda) +
+            coord_trans(x='log', y='log') +
+              scale_x_continuous(breaks= beta.scl, label=beta.lbl ) +
+                scale_y_continuous(breaks= beta.scl, label=beta.lbl ) +
+                  scale_size_discrete(range=c(1,2.5)) +
+                    xlab(x.lab) +
+                      ylab('beta') +
+                        ggtitle(title) +
+                          theme_bw() +
+                            theme(axis.title.x = element_text(face='bold', size=20),
+                                  axis.title.y = element_text(face='bold', size=20),
+                                  axis.text.x = element_text(size=7),
+                                  axis.text.y = element_text(size=7),
+                                  strip.text.x = element_text(size=10),
+                                  strip.background = element_rect(colour = NA),
+                                  plot.title = element_text(face='bold'))
+  }
+}
