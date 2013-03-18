@@ -153,7 +153,32 @@ plot.cv.lambda.rust <- function(dat.mat, lambda, x.lab='', y.lab=''){
 
 }
 
-plot.beta.scatter.rust <- function(beta.sc, beta.al, title='Scatter plot comparing beta values',
+plot.cv.facet.lambda.rust <- function(dat.mat, lambda, x.lab='predicted t-point', y.lab='RSS', t.dat,
+                                      title.g='RSS of t-pt knockout, facet lambda'){
+
+  rss.tk <- data.frame(rss=as.vector(rss.mat), lambda=rep(lambda, length(t.dat)-1),
+                       t.ko = rep(2:(length(t.dat) ), each=nrow(dat.mat)))
+  ggplot(rss.tk, aes(y=rss)) +
+  geom_point(aes(x=t.ko)) +
+  geom_line(aes(x=t.ko)) +
+  facet_wrap(~lambda) +
+  xlab(x.lab) +
+  ylab(y.lab) +
+  scale_x_continuous(limits=c(2,15), breaks=seq(2,16,2) ) +
+  ggtitle(title.g) +
+  theme_bw() +
+  theme(legend.position = 'none',
+        axis.title.x = element_text(face='bold', size=20),
+        axis.title.y = element_text(face='bold', size=20),
+        axis.text.x = element_text(size=10),
+        axis.text.y = element_text(size=14),
+        strip.text.x = element_text(size=10),
+        strip.background = element_rect(colour = NA),
+        plot.title = element_text(face='bold'))
+
+}
+
+plot.beta.scatter.rust <- function(beta.sc, beta.al, title.g='Scatter plot comparing beta values',
                                    x.lab, b.scl = 'log', lmbd.vec, n.stt=4, n.gn=12){
 
   if(b.scl=='log'){  #All the beta values below are shifted by one,
@@ -176,7 +201,7 @@ plot.beta.scatter.rust <- function(beta.sc, beta.al, title='Scatter plot compari
                   scale_size_discrete(range=c(1,2.5)) +
                     xlab(x.lab) +
                       ylab('beta') +
-                        ggtitle(title) +
+                        ggtitle(title.g) +
                           theme_bw() +
                             theme(axis.title.x = element_text(face='bold', size=20),
                                   axis.title.y = element_text(face='bold', size=20),
