@@ -178,6 +178,31 @@ plot.cv.facet.lambda.rust <- function(dat.mat, lambda, x.lab='predicted t-point'
 
 }
 
+plot.cv.facet.t.rust <- function(dat.mat, lambda, x.lab='lambda', y.lab='RSS', t.dat,
+                                      title.g='RSS of t-pt knockout, facet predicted t'){
+  rss.tk <- data.frame(rss=as.vector(rss.mat), lambda=rep(lambda, length(t.dat)-1),
+                       t.ko = rep(2:(length(t.dat) ), each=nrow(dat.mat)))
+
+  ggplot(rss.tk, aes(y=rss)) +
+    geom_point(aes(x=lambda)) +
+      geom_line(aes(x=lambda)) +
+        facet_wrap(~t.ko) +
+          xlab(x.lab) +
+            ylab(y.lab) +
+              scale_x_continuous(limits=c(0,0.3), breaks=seq(0,0.29,0.05) ) +
+                ggtitle(title.g) +
+                  theme_bw() +
+                    theme(legend.position = 'none',
+                          axis.title.x = element_text(face='bold', size=20),
+                          axis.title.y = element_text(face='bold', size=20),
+                          axis.text.x = element_text(size=7),
+                          axis.text.y = element_text(size=14),
+                          strip.text.x = element_text(size=10),
+                          strip.background = element_rect(colour = NA),
+                          plot.title = element_text(face='bold'))
+
+}
+
 plot.beta.scatter.rust <- function(beta.sc, beta.al, title.g='Scatter plot comparing beta values',
                                    x.lab, b.scl = 'log', lmbd.vec, n.stt=4, n.gn=12){
 
