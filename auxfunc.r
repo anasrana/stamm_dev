@@ -105,8 +105,11 @@ plot.traj.rust <- function(g.dat, t){
 
 plot.beta.rust <- function(b.sim){
 
+
   p <- nrow(b.sim)
   k <- ncol(b.sim)
+  if(is.null(rownames(b.sim)))
+        rownames(b.sim) <- 1:p
   b.val <- data.frame(beta=as.vector(b.sim), stt=factor(rep(1:k, each=p)), gn=factor(rep( (rownames(b.sim)), k)))
 
 b.g <- ggplot(b.val) +
@@ -132,7 +135,7 @@ b.g <- ggplot(b.val) +
 
 vplayout <- function(x, y)viewport(layout.pos.row = x, layout.pos.col =y)
 
-plot.cv.lambda.rust <- function(dat.mat, lambda, x.lab='', y.lab='', n.run=1){
+plot.cv.lambda.rust <- function(dat.mat, lambda, x.lab='', y.lab='', n.run=1, l.sz=1.2){
 
   if(n.run==1){
     dat.l <- data.frame(y.val=apply(dat.mat, 1, sum), lambda=lambda)
@@ -151,15 +154,14 @@ plot.cv.lambda.rust <- function(dat.mat, lambda, x.lab='', y.lab='', n.run=1){
                       plot.title = element_text(face='bold'))
   } else if(n.run>1){
     dat.l <- data.frame(y.val=as.vector(dat.mat), lambda=rep(lambda, ncol(dat.mat)),
-                        nrun=rep(1:ncol(dat.mat), each=nrow(dat.mat)))
-    plot.p <- ggplot(dat.l, aes(x=lambda, y=y.val, col=as.factor(nrun), group=nrun)) +
+                        nrun=as.factor(rep(1:ncol(dat.mat), each=nrow(dat.mat))))
+    plot.p <- ggplot(dat.l, aes(x=lambda, y=y.val, col=nrun, group=nrun)) +
       geom_point(size=2) +
-        geom_line(size=1.2) +
+        geom_line(size=l.sz) +
           xlab(x.lab) +
             ylab(y.lab) +
               theme_bw() +
-                theme(legend.position = 'none',
-                      axis.title.x = element_text(face='bold', size=20),
+                theme(axis.title.x = element_text(face='bold', size=20),
                       axis.title.y = element_text(face='bold', size=20),
                       axis.text.x = element_text(size=12),
                       axis.text.y = element_text(size=12),
@@ -222,7 +224,6 @@ plot.cv.facet.t.rust <- function(dat.mat, lambda, x.lab='lambda', y.lab='RSS', t
 
 plot.beta.scatter.rust <- function(beta.sc, beta.al, title.g='Scatter plot comparing beta values',
                                    x.lab, b.scl = 'log', lmbd.vec, n.stt=4, n.gn=12){
-
   if(b.scl=='log'){  #All the beta values below are shifted by one,
                      #the assumption is that they contain 0 values
     beta.dm <- data.frame(beta0=rep(beta.sc +1 , ncol(beta.al)), beta=as.vector(beta.al +1),
@@ -261,9 +262,14 @@ plot.beta.scatter.rust <- function(beta.sc, beta.al, title.g='Scatter plot compa
 ##   ********************************************************************************
 
 
-rust.cv.rss <- function(fit.file){
+rust.cv.rss <- function(fit.file, n.stt=4, n.gn=12, t.ko=1){
   load(fit.file)
   load(paste('~/complexity/phd/projects/rust/results/5mar13/sim_varScl_4.rdat',sep='') )
+
+  beta.f <- matrix(NA, n.stt*n.gn, length(fit))
+  for(i in 1:length(fit)){
+    beta.f[,i] <- as.vector(fit[[i]][[t.ko]]$beta)
+  }
 
   w.sim <- matrix(0, nrow(fit[[1]][[1]]$w),ncol(fit[[1]][[1]]$w))
   diag(w.sim[-1,]) <- 1/sim.dat$sim$tau
@@ -283,5 +289,6 @@ rust.cv.rss <- function(fit.file){
     }
   }
 
-  return(list(rss = rss.mat, beta = beta, w = w, sim.dat=sim.dat, fit.dat = fit))
+  return(list(rss = rss.mat, beta = beta, w = w, sim.dat=sim.dat, fit.dat = fit,
+              lambda=lmbd.mat[,1], beta.fit=beta.f))
 }
