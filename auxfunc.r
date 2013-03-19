@@ -271,6 +271,12 @@ rust.cv.rss <- function(fit.file, n.stt=4, n.gn=12, t.ko=1){
     beta.f[,i] <- as.vector(fit[[i]][[t.ko]]$beta)
   }
 
+  w.f <- matrix(NA, n.stt*n.gn, length(fit))
+  for(i in 1:length(fit)){
+    w.f[,i] <- as.vector(fit[[i]][[t.ko]]$w)
+  }
+
+
   w.sim <- matrix(0, nrow(fit[[1]][[1]]$w),ncol(fit[[1]][[1]]$w))
   diag(w.sim[-1,]) <- 1/sim.dat$sim$tau
 
@@ -290,5 +296,5 @@ rust.cv.rss <- function(fit.file, n.stt=4, n.gn=12, t.ko=1){
   }
 
   return(list(rss = rss.mat, beta = beta, w = w, sim.dat=sim.dat, fit.dat = fit,
-              lambda=lmbd.mat[,1], beta.fit=beta.f))
+              lambda=lmbd.mat[,1], beta.fit=beta.f, w.fit=w.f))
 }
