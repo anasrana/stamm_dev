@@ -103,7 +103,7 @@ PlotTrajRust <- function(g.dat, t){
   return(t.g)
 }
 
-plotBetaRust <- function(b.sim){
+PlotBetaRust <- function(b.sim){
 
 
   p <- nrow(b.sim)
@@ -299,10 +299,11 @@ PlotWmatConvClust <- function(w.cl, tau, as.tau=FALSE, title.g=''){
 
 
 RustCvRss <- function(fit.file, n.stt=4, n.gn=12, t.ko=1, sim.file){
+
   load(fit.file)
   load(sim.file)
   if (!exists('sim.dat'))
-    sim.dat <- list(sim = sim)
+    sim.dat <- list(sim = sim, beta = sim$beta)
 
   beta.f <- matrix(NA, n.stt*n.gn, length(fit))
   for(i in 1:length(fit)){
@@ -318,7 +319,7 @@ RustCvRss <- function(fit.file, n.stt=4, n.gn=12, t.ko=1, sim.file){
   w.sim <- matrix(0, n.stt, n.stt)
   diag(w.sim[-1,]) <- 1/sim.dat$sim$tau
 
-  rss.mat <- matrix(NA, length(fit), length(t.dat)-1)
+
   beta <- matrix(NA, length(fit), length(t.dat)-1)
   w <- matrix(NA, length(fit), length(t.dat)-1)
   rss.mat <- matrix(NA, length(fit), length(t.dat)-1)
