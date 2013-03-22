@@ -133,7 +133,8 @@ plotBetaRust <- function(b.sim){
 }
 
 
-Vplayout <- function(x, y)viewport(layout.pos.row = x, layout.pos.col =y)
+Vplayout <- function(x, y)
+  viewport(layout.pos.row = x, layout.pos.col =y)
 
 PlotCvLambdaRust <- function(dat.mat, lambda, x.lab='', y.lab='', n.run=1, l.sz=1.2){
 
@@ -151,7 +152,7 @@ PlotCvLambdaRust <- function(dat.mat, lambda, x.lab='', y.lab='', n.run=1, l.sz=
                       axis.text.x = element_text(size=12),
                       axis.text.y = element_text(size=12),
                       strip.background = element_rect(colour = NA),
-                      Plottitle = element_text(face='bold'))
+                      plot.title = element_text(face='bold'))
   } else if(n.run>1){
     dat.l <- data.frame(y.val=as.vector(dat.mat), lambda=rep(lambda, ncol(dat.mat)),
                         nrun=as.factor(rep(1:ncol(dat.mat), each=nrow(dat.mat))))
@@ -166,7 +167,7 @@ PlotCvLambdaRust <- function(dat.mat, lambda, x.lab='', y.lab='', n.run=1, l.sz=
                       axis.text.x = element_text(size=12),
                       axis.text.y = element_text(size=12),
                       strip.background = element_rect(colour = NA),
-                      Plottitle = element_text(face='bold'))
+                      plot.title = element_text(face='bold'))
   }
 
   return(Plotp)
@@ -193,7 +194,7 @@ PlotCvFacetLambdaRust <- function(dat.mat, lambda, x.lab='predicted t-point', y.
                           axis.text.y = element_text(size=14),
                           strip.text.x = element_text(size=10),
                           strip.background = element_rect(colour = NA),
-                          Plottitle = element_text(face='bold'))
+                          plot.title = element_text(face='bold'))
   return(Plotp)
 }
 
@@ -218,7 +219,7 @@ PlotCvFacet.t.rust <- function(dat.mat, lambda, x.lab='lambda', y.lab='RSS', t.d
                           axis.text.y = element_text(size=14),
                           strip.text.x = element_text(size=10),
                           strip.background = element_rect(colour = NA),
-                          Plottitle = element_text(face='bold'))
+                          plot.title = element_text(face='bold'))
   return(Plotp)
 }
 
@@ -252,8 +253,43 @@ PlotBetaScatterRust <- function(beta.sc, beta.al, title.g='Scatter plot comparin
                                   axis.text.y = element_text(size=7),
                                   strip.text.x = element_text(size=10),
                                   strip.background = element_rect(colour = NA),
-                                  Plottitle = element_text(face='bold'))
+                                  plot.title = element_text(face='bold'))
   }
+}
+
+PlotWmatConvClust <- function(w.cl, tau, as.tau=FALSE, title.g=''){
+  if (as.tau) {
+    dat.cl <- data.frame(y.val=as.vector(1/w.cl), ind=as.factor(rep(1:length(tau), ncol(w.cl))),
+                         cl=rep(1:ncol(w.cl) +1, each=length(tau)))
+    dat.sim <- data.frame(y.val=tau, ind=as.factor(1:length(tau)))
+    y.lab <- 'Mean jump time'
+  } else {
+    dat.cl <- data.frame(y.val=as.vector(w.cl), ind=as.factor(rep(1:length(tau), ncol(w.cl))),
+                         cl=rep(1:ncol(w.cl) +1, each=length(tau)))
+    dat.sim <- data.frame(y.val=1/tau, ind=as.factor(1:length(tau)))
+    y.lab <- "Transition rate"
+  }
+  x.lab <- "No. of k-means clusters"
+  cl.scl <- c(2, seq(5, ncol(w.cl) +1, 5))
+
+  ggplot(dat.cl, aes(x = cl, y = y.val, col = ind)) +
+    geom_point(size = 2) +
+      geom_line(size = 0.4, aes(linetype = ind)) +
+        geom_hline(yintercept=dat.sim$y.val, col=as.factor(1:length(tau)),
+                   linetype='dashed', alpha=0.5) +
+                     scale_x_continuous(breaks = cl.scl) +
+            xlab(x.lab) +
+            ylab(y.lab) +
+              ggtitle(title.g) +
+                theme_bw() +
+                  theme(axis.title.x = element_text(face='bold', size=20),
+                        axis.title.y = element_text(face='bold', size=20),
+                        axis.text.x = element_text(size=10),
+                        axis.text.y = element_text(size=10),
+                        strip.text.x = element_text(size=10),
+                        strip.background = element_rect(colour = NA),
+                        plot.title = element_text(face='bold'))
+
 }
 
 ## ********************************************************************************
@@ -265,8 +301,8 @@ PlotBetaScatterRust <- function(beta.sc, beta.al, title.g='Scatter plot comparin
 RustCvRss <- function(fit.file, n.stt=4, n.gn=12, t.ko=1, sim.file){
   load(fit.file)
   load(sim.file)
-  if(!exists('sim.dat'))
-    sim.dat$sim <- sim; print('sim.dat not in simul. file -> assume sim')
+  if (!exists('sim.dat'))
+    sim.dat <- list(sim = sim)
 
   beta.f <- matrix(NA, n.stt*n.gn, length(fit))
   for(i in 1:length(fit)){
