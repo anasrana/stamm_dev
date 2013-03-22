@@ -10,7 +10,7 @@ require(grid)
 ##' @param b.fit beta matrix from fitting
 ##' @return
 ##' @author anas ahmad rana
-plot.comp.beta.rust <- function(b.sim, b.fit){
+PlotCompBetaRust <- function(b.sim, b.fit){
 
   p <- nrow(b.sim)
   k <- ncol(b.sim)
@@ -47,7 +47,7 @@ plot.comp.beta.rust <- function(b.sim, b.fit){
 ##' @param w fitted w matrix
 ##' @return
 ##' @author anas ahmad rana
-plot.comp.traj.rust <- function(g.dat, t, b.fit, w){
+PlotCompTrajRust <- function(g.dat, t, b.fit, w){
 
 
   p <- nrow(b.fit)
@@ -78,7 +78,7 @@ plot.comp.traj.rust <- function(g.dat, t, b.fit, w){
   return(t.g)
 }
 
-plot.traj.rust <- function(g.dat, t){
+PlotTrajRust <- function(g.dat, t){
 
   p <- nrow(g.dat)
   sim.dat <- data.frame(g=as.vector(g.dat), gn = factor(rep( (rownames(g.dat)), length(t))),
@@ -103,7 +103,7 @@ plot.traj.rust <- function(g.dat, t){
   return(t.g)
 }
 
-plot.beta.rust <- function(b.sim){
+plotBetaRust <- function(b.sim){
 
 
   p <- nrow(b.sim)
@@ -133,13 +133,13 @@ plot.beta.rust <- function(b.sim){
 }
 
 
-vplayout <- function(x, y)viewport(layout.pos.row = x, layout.pos.col =y)
+Vplayout <- function(x, y)viewport(layout.pos.row = x, layout.pos.col =y)
 
-plot.cv.lambda.rust <- function(dat.mat, lambda, x.lab='', y.lab='', n.run=1, l.sz=1.2){
+PlotCvLambdaRust <- function(dat.mat, lambda, x.lab='', y.lab='', n.run=1, l.sz=1.2){
 
   if(n.run==1){
     dat.l <- data.frame(y.val=apply(dat.mat, 1, sum), lambda=lambda)
-    plot.p <- ggplot(dat.l, aes(x=lambda, y=y.val)) +
+    Plotp <- ggplot(dat.l, aes(x=lambda, y=y.val)) +
       geom_point(size=2) +
         geom_line(size=1.2) +
           xlab(x.lab) +
@@ -151,11 +151,11 @@ plot.cv.lambda.rust <- function(dat.mat, lambda, x.lab='', y.lab='', n.run=1, l.
                       axis.text.x = element_text(size=12),
                       axis.text.y = element_text(size=12),
                       strip.background = element_rect(colour = NA),
-                      plot.title = element_text(face='bold'))
+                      Plottitle = element_text(face='bold'))
   } else if(n.run>1){
     dat.l <- data.frame(y.val=as.vector(dat.mat), lambda=rep(lambda, ncol(dat.mat)),
                         nrun=as.factor(rep(1:ncol(dat.mat), each=nrow(dat.mat))))
-    plot.p <- ggplot(dat.l, aes(x=lambda, y=y.val, col=nrun, group=nrun)) +
+    Plotp <- ggplot(dat.l, aes(x=lambda, y=y.val, col=nrun, group=nrun)) +
       geom_point(size=2) +
         geom_line(size=l.sz) +
           xlab(x.lab) +
@@ -166,18 +166,18 @@ plot.cv.lambda.rust <- function(dat.mat, lambda, x.lab='', y.lab='', n.run=1, l.
                       axis.text.x = element_text(size=12),
                       axis.text.y = element_text(size=12),
                       strip.background = element_rect(colour = NA),
-                      plot.title = element_text(face='bold'))
+                      Plottitle = element_text(face='bold'))
   }
 
-  return(plot.p)
+  return(Plotp)
 }
 
-plot.cv.facet.lambda.rust <- function(dat.mat, lambda, x.lab='predicted t-point', y.lab='RSS', t.dat,
+PlotCvFacetLambdaRust <- function(dat.mat, lambda, x.lab='predicted t-point', y.lab='RSS', t.dat,
                                       title.g='RSS of t-pt knockout, facet lambda'){
 
   rss.tk <- data.frame(rss=as.vector(rss.mat), lambda=rep(lambda, length(t.dat)-1),
                        t.ko = rep(2:(length(t.dat) ), each=nrow(dat.mat)))
-  plot.p <- ggplot(rss.tk, aes(y=rss)) +
+  Plotp <- ggplot(rss.tk, aes(y=rss)) +
     geom_point(aes(x=t.ko)) +
       geom_line(aes(x=t.ko)) +
         facet_wrap(~lambda) +
@@ -193,16 +193,16 @@ plot.cv.facet.lambda.rust <- function(dat.mat, lambda, x.lab='predicted t-point'
                           axis.text.y = element_text(size=14),
                           strip.text.x = element_text(size=10),
                           strip.background = element_rect(colour = NA),
-                          plot.title = element_text(face='bold'))
-  return(plot.p)
+                          Plottitle = element_text(face='bold'))
+  return(Plotp)
 }
 
-plot.cv.facet.t.rust <- function(dat.mat, lambda, x.lab='lambda', y.lab='RSS', t.dat,
+PlotCvFacet.t.rust <- function(dat.mat, lambda, x.lab='lambda', y.lab='RSS', t.dat,
                                  title.g='RSS of t-pt knockout, facet predicted t'){
   rss.tk <- data.frame(rss=as.vector(rss.mat), lambda=rep(lambda, length(t.dat)-1),
                        t.ko = rep(2:(length(t.dat) ), each=nrow(dat.mat)))
 
-  plot.p <- ggplot(rss.tk, aes(y=rss)) +
+  Plotp <- ggplot(rss.tk, aes(y=rss)) +
     geom_point(aes(x=lambda)) +
       geom_line(aes(x=lambda)) +
         facet_wrap(~t.ko) +
@@ -218,11 +218,11 @@ plot.cv.facet.t.rust <- function(dat.mat, lambda, x.lab='lambda', y.lab='RSS', t
                           axis.text.y = element_text(size=14),
                           strip.text.x = element_text(size=10),
                           strip.background = element_rect(colour = NA),
-                          plot.title = element_text(face='bold'))
-  return(plot.p)
+                          Plottitle = element_text(face='bold'))
+  return(Plotp)
 }
 
-plot.beta.scatter.rust <- function(beta.sc, beta.al, title.g='Scatter plot comparing beta values',
+PlotBetaScatterRust <- function(beta.sc, beta.al, title.g='Scatter plot comparing beta values',
                                    x.lab, b.scl = 'log', lmbd.vec, n.stt=4, n.gn=12){
   if(b.scl=='log'){  #All the beta values below are shifted by one,
                                         #the assumption is that they contain 0 values
@@ -252,7 +252,7 @@ plot.beta.scatter.rust <- function(beta.sc, beta.al, title.g='Scatter plot compa
                                   axis.text.y = element_text(size=7),
                                   strip.text.x = element_text(size=10),
                                   strip.background = element_rect(colour = NA),
-                                  plot.title = element_text(face='bold'))
+                                  Plottitle = element_text(face='bold'))
   }
 }
 
@@ -262,7 +262,7 @@ plot.beta.scatter.rust <- function(beta.sc, beta.al, title.g='Scatter plot compa
 ##   ********************************************************************************
 
 
-rust.cv.rss <- function(fit.file, n.stt=4, n.gn=12, t.ko=1, sim.file){
+RustCvRss <- function(fit.file, n.stt=4, n.gn=12, t.ko=1, sim.file){
   load(fit.file)
   load(sim.file)
   if(!exists('sim.dat'))
