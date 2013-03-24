@@ -257,12 +257,17 @@ PlotBetaScatterRust <- function(beta.sc, beta.al, title.g='Scatter plot comparin
   }
 }
 
-PlotWmatConvClust <- function(w.cl, tau, as.tau=FALSE, title.g=''){
-  if (as.tau) {
+PlotWmatConvClust <- function(w.cl, tau, plot.as=FALSE, title.g=''){
+  if (plot.as == 'tau') {
     dat.cl <- data.frame(y.val=as.vector(1/w.cl), ind=as.factor(rep(1:length(tau), ncol(w.cl))),
                          cl=rep(1:ncol(w.cl) +1, each=length(tau)))
     dat.sim <- data.frame(y.val=tau, ind=as.factor(1:length(tau)))
     y.lab <- 'Mean jump time'
+  } else if (plot.as == 'diffw'){
+    dat.cl <- data.frame(y.val=as.vector(w.cl), ind=as.factor(rep(1:length(tau), ncol(w.cl))),
+                         cl=rep(1:ncol(w.cl) +1, each=length(tau)))
+    dat.sim <- data.frame(y.val=(1/tau - 1/tau), ind=as.factor(1))
+    y.lab <- 'Diff trnstn rate to sim'
   } else {
     dat.cl <- data.frame(y.val=as.vector(w.cl), ind=as.factor(rep(1:length(tau), ncol(w.cl))),
                          cl=rep(1:ncol(w.cl) +1, each=length(tau)))
@@ -272,24 +277,43 @@ PlotWmatConvClust <- function(w.cl, tau, as.tau=FALSE, title.g=''){
   x.lab <- "No. of k-means clusters"
   cl.scl <- c(2, seq(5, ncol(w.cl) +1, 5))
 
-  ggplot(dat.cl, aes(x = cl, y = y.val, col = ind)) +
-    geom_point(size = 2) +
-      geom_line(size = 0.4, aes(linetype = ind)) +
-        geom_hline(yintercept=dat.sim$y.val, col=as.factor(1:length(tau)),
-                   linetype='dashed', alpha=0.5) +
-                     scale_x_continuous(breaks = cl.scl) +
-            xlab(x.lab) +
-            ylab(y.lab) +
-              ggtitle(title.g) +
-                theme_bw() +
-                  theme(axis.title.x = element_text(face='bold', size=20),
-                        axis.title.y = element_text(face='bold', size=20),
-                        axis.text.x = element_text(size=10),
-                        axis.text.y = element_text(size=10),
-                        strip.text.x = element_text(size=10),
-                        strip.background = element_rect(colour = NA),
-                        plot.title = element_text(face='bold'))
-
+  if(plot.as == 'diffw'){
+    ggplot(dat.cl, aes(x = cl, y = y.val, col = ind)) +
+      geom_point(size = 2) +
+        geom_line(size = 0.4, aes(linetype = ind)) +
+          geom_hline(yintercept=dat.sim$y.val, col='black',
+                     linetype='dashed') +
+                       scale_x_continuous(breaks = cl.scl) +
+                         xlab(x.lab) +
+                           ylab(y.lab) +
+                             ggtitle(title.g) +
+                               theme_bw() +
+                                 theme(axis.title.x = element_text(face='bold', size=20),
+                                       axis.title.y = element_text(face='bold', size=20),
+                                       axis.text.x = element_text(size=10),
+                                       axis.text.y = element_text(size=10),
+                                       strip.text.x = element_text(size=10),
+                                       strip.background = element_rect(colour = NA),
+                                       plot.title = element_text(face='bold'))
+  } else {
+    ggplot(dat.cl, aes(x = cl, y = y.val, col = ind)) +
+      geom_point(size = 2) +
+        geom_line(size = 0.4, aes(linetype = ind)) +
+          geom_hline(yintercept=dat.sim$y.val, col=dat.sim$ind,
+                     linetype='dashed', alpha=0.5) +
+                       scale_x_continuous(breaks = cl.scl) +
+                         xlab(x.lab) +
+                           ylab(y.lab) +
+                             ggtitle(title.g) +
+                               theme_bw() +
+                                 theme(axis.title.x = element_text(face='bold', size=20),
+                                       axis.title.y = element_text(face='bold', size=20),
+                                       axis.text.x = element_text(size=10),
+                                       axis.text.y = element_text(size=10),
+                                       strip.text.x = element_text(size=10),
+                                       strip.background = element_rect(colour = NA),
+                                       plot.title = element_text(face='bold'))
+  }
 }
 
 ## ********************************************************************************
