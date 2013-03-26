@@ -174,7 +174,7 @@ PlotCvLambdaRust <- function(dat.mat, lambda, x.lab='', y.lab='', n.run=1, l.sz=
 }
 
 PlotCvFacetLambdaRust <- function(dat.mat, lambda, x.lab='predicted t-point', y.lab='RSS', t.dat,
-                                      title.g='RSS of t-pt knockout, facet lambda'){
+                                  title.g='RSS of t-pt knockout, facet lambda'){
 
   rss.tk <- data.frame(rss=as.vector(rss.mat), lambda=rep(lambda, length(t.dat)-1),
                        t.ko = rep(2:(length(t.dat) ), each=nrow(dat.mat)))
@@ -198,8 +198,8 @@ PlotCvFacetLambdaRust <- function(dat.mat, lambda, x.lab='predicted t-point', y.
   return(Plotp)
 }
 
-PlotCvFacet.t.rust <- function(dat.mat, lambda, x.lab='lambda', y.lab='RSS', t.dat,
-                                 title.g='RSS of t-pt knockout, facet predicted t'){
+PlotCvFacetTrust <- function(dat.mat, lambda, x.lab='lambda', y.lab='RSS', t.dat,
+                               title.g='RSS of t-pt knockout, facet predicted t'){
   rss.tk <- data.frame(rss=as.vector(rss.mat), lambda=rep(lambda, length(t.dat)-1),
                        t.ko = rep(2:(length(t.dat) ), each=nrow(dat.mat)))
 
@@ -224,7 +224,7 @@ PlotCvFacet.t.rust <- function(dat.mat, lambda, x.lab='lambda', y.lab='RSS', t.d
 }
 
 PlotBetaScatterRust <- function(beta.sc, beta.al, title.g='Scatter plot comparing beta values',
-                                   x.lab, b.scl = 'log', lmbd.vec, n.stt=4, n.gn=12){
+                                x.lab, b.scl = 'log', lmbd.vec, n.stt=4, n.gn=12){
   if(b.scl=='log'){  #All the beta values below are shifted by one,
                                         #the assumption is that they contain 0 values
     beta.dm <- data.frame(beta0=rep(beta.sc +1 , ncol(beta.al)), beta=as.vector(beta.al +1),
