@@ -70,7 +70,7 @@ rust.centroid.fit <- function(dat.cntrd, t.dat, lambda, n.stt, fit.as, rSmpls, r
                               gData, reps, n.smpl, fit.pll){
   ms.rss <-  10^10
   for(is in 1:reps){
-    tmp.fit <- rust.fit.kStt(gData=dat.cntrd, tData=t.dat, lambda=lambda, n.states=n.stt, fit.as=fit.as)
+    tmp.fit <- RustFitKstt(gData=dat.cntrd, tData=t.dat, lambda=lambda, n.states=n.stt, fit.as=fit.as)
     if(tmp.fit$ms[1]<ms.rss){
       cl.fit <- tmp.fit
       ms.rss <- tmp.fit$ms[1]
@@ -125,18 +125,17 @@ rust.centroid.fit <- function(dat.cntrd, t.dat, lambda, n.stt, fit.as, rSmpls, r
 ##' @param fit.pll logical for parallel fitting
 ##' @return
 ##' @author anas ahmad rana
-rust.fit.gnlst <- function(gName, gData, tData, lambda, n.states, fit.as, w, fit.pll=FALSE){
+RustFitGnlst <- function(gName, gData, tData, lambda, n.states, w, fit.pll=FALSE){
 
   gName <- as.list(gName)
-
   if(fit.pll){
     fit.gnes <- mclapply(gName, function(x)
-                     cl.fit = rust.fit.kStt(gData=gData[x,], tData=tData, lambda=lambda,
-                       n.states=n.states, fit.as=fit.as, w=w, fix.w=TRUE))
+                     cl.fit = RustFitKstt(gData=gData[x,], tData=tData, lambda=lambda,
+                       n.states=n.states, w=w, fix.w=TRUE))
   } else {
     fit.gnes <- lapply(gName, function(x)
-                         cl.fit = rust.fit.kStt(gData=gData[x,], tData=tData, lambda=lambda,
-                           n.states=n.states, fit.as=fit.as, w=w, fix.w=TRUE))
+                         cl.fit = RustFitKstt(gData=gData[x,], tData=tData, lambda=lambda,
+                           n.states=n.states, w=w, fix.w=TRUE))
   }
 
   ## take out important information from the fitting data
@@ -234,7 +233,7 @@ rust.sampl <- function(gData, rSmpl.size, n.randSmpl, rep.gns=NULL){
 ##' Fits data to aggregate Markov Chain model
 ##'
 ##' .. content for \details{} ..
-##' @title rust.fit.kStt
+##' @title RustFitKstt
 ##' @param gData gene expression data
 ##' @param tData time points of data
 ##' @param lambda L1 penalty parameter (default = 0.01)
@@ -247,8 +246,7 @@ rust.sampl <- function(gData, rSmpl.size, n.randSmpl, rep.gns=NULL){
 ##' It returns the fitted $w$ matrix and the $/beta$ matrix. It also returns a  obj vector
 ##' that contains the rss, bic and aic scores for the fit.
 ##' @author anas ahmad rana
-rust.fit.kStt <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as='lin',
-                          fix.w=FALSE, w=NULL){
+RustFitKstt <- function(gData, tData, lambda = 0.01, n.states = 3, fix.w=FALSE, w=NULL) {
   p <- nrow(gData)
   if(fix.w){
     p <- 1
@@ -259,64 +257,28 @@ rust.fit.kStt <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as='lin
     wFit <- NULL
   }
 
-  if(0 %in% gData & fit.as %in% c('log2Dat', 'logDat', 'log2Al'))
-    gData = gData+1
+  g.dat.l <- log2(gData + 1)
+  if ( !is.vector(gData) )
+    g.nl <- apply(gData, 1, sd)
+  else
+    g.nl <- sd(gData)
 
-  ## Functions for the fitting procedure depending on how to fit
-  if(fit.as=='lin'){
-    fun <- function(x){
+
+  fun <- function(x){
       tmp <- rust.par(x=x, n.states=n.states, p=p, fix.w=fix.w, wFit=wFit)
       wFit <- tmp$w
       betaFit <- tmp$beta
       fit <- rust.kStt(wFit, betaFit, tData)
-      rss <- (fit$y - gData)^2
-      penalty <- lambda*sum(abs(betaFit))
+      rss <- ((log2(fit$y + 1) - g.dat.l))^2
+      penalty <- lambda*sum(abs(betaFit)/g.nl)
       ss <- c(rss,penalty)
-      sum(ss)
-    }
-  } else if(fit.as=='log2Dat'){
-    fun <- function(x){
-      tmp <- rust.par(x=x, n.states=n.states, p=p, fix.w=fix.w, wFit=wFit)
-      wFit <- tmp$w
-      betaFit <- tmp$beta
-      fit <- rust.kStt(wFit, betaFit, tData)
-      rss <- (log2(fit$y) - gData)^2
-      penalty <- lambda*sum(abs(betaFit))
-      ss <- c(rss,penalty)
-      sum(ss)
-    }
-  } else if(fit.as=='logDat'){
-    fun <- function(x){
-      tmp <- rust.par(x=x, n.states=n.states, p=p, fix.w=fix.w, wFit=wFit)
-      wFit <- tmp$w
-      betaFit <- tmp$beta
-      fit <- rust.kStt(wFit, betaFit, tData)
-      rss <- (log(fit$y) - gData)^2
-      penalty <- lambda*sum(abs(betaFit))
-      ss <- c(rss,penalty)
-      sum(ss)
-    }
-  } else if(fit.as=='log2Al'){
-    fun <- function(x){
-      tmp <- rust.par(x=x, n.states=n.states, p=p, fix.w=fix.w, wFit=wFit)
-      wFit <- tmp$w
-      betaFit <- tmp$beta
-      fit <- rust.kStt(wFit, betaFit, tData)
-      rss <- (log2(fit$y) - log2(gData))^2
-      penalty <- lambda*sum(abs(betaFit))
-      ss <- c(rss,penalty)
-      sum(ss)
+      obj <- sum(ss)
+      obj
     }
 
-  } else {
-    stop('String fit.as not recognised')
-  }
-  ##
-
-  res <- nlminb(x0, fun, lower=0, control=list(iter.max = 10000, eval.max=7000, rel.tol=10^-14, sing.tol=10.^-7))
+  res <- nlminb(x0, fun, lower=0,
+                control=list(iter.max = 10000, eval.max=7000, rel.tol=10^-14, sing.tol=10.^-7))
   par <- rust.par(gData, res$par, n.states, fix.w=fix.w, wFit=w)
-
-
 
   n <- ncol(gData)
 
@@ -437,7 +399,7 @@ rust.kStt <- function(wFit = NULL, betaFit, t){
 ##  TESTING *********************************************************************************
 ## ******************************************************************************************
 
-rust.fit.kStt.norm <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as='lin',
+RustFitKstt.norm <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as='lin',
                           fix.w=FALSE, w=NULL){
   p <- nrow(gData)
   x0 <- runif(3, max=1)
@@ -486,7 +448,7 @@ res <- nlminb(start=x0, objective=fun, lower = 0, upper = max(gData), scale=1/pa
   return(list(fit=res, w=par$w, beta=par$beta, ms=obj))
 }
 
-rust.fit.kStt.pen <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as,
+RustFitKsttPen <- function(gData, tData, lambda = 0.01, n.states = 3, fit.as,
                           fix.w=FALSE, w=NULL){
 
   p <- nrow(gData)
