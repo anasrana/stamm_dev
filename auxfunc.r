@@ -327,15 +327,15 @@ RustCvRss <- function(fit.file, n.stt=4, n.gn=12, t.ko=1, sim.file){
   load(fit.file)
   load(sim.file)
   if (!exists('sim.dat'))
-    sim.dat <- list(sim = sim, beta = sim$beta)
+    sim.dat <- list(sim = sim, beta = sim$beta, tau = sim$tau)
 
   beta.f <- matrix(NA, n.stt*n.gn, length(fit))
-  for(i in 1:length(fit)){
+  for (i in 1:length(fit)) {
     beta.f[,i] <- as.vector(fit[[i]][[t.ko]]$beta)
   }
 
   w.f <- matrix(NA, n.stt*n.gn, length(fit))
-  for(i in 1:length(fit)){
+  for (i in 1:length(fit)) {
     w.f[,i] <- as.vector(fit[[i]][[t.ko]]$w)
   }
 
@@ -347,8 +347,8 @@ RustCvRss <- function(fit.file, n.stt=4, n.gn=12, t.ko=1, sim.file){
   beta <- matrix(NA, length(fit), length(t.dat)-1)
   w <- matrix(NA, length(fit), length(t.dat)-1)
   rss.mat <- matrix(NA, length(fit), length(t.dat)-1)
-  for( i.l in 1:length(fit) ){
-    for( i.t in 2:length(t.dat) ){
+  for ( i.l in 1:length(fit) ) {
+    for ( i.t in 2:length(t.dat) ) {
       beta[i.l, i.t-1] <- sum((fit[[i.l]][[i.t]]$beta - sim.dat$beta)^2)
       w[i.l, i.t-1] <- sum((fit[[i.l]][[i.t]]$w - w.sim)^2)
       bt <- fit[[i.l]][[i.t]]$beta
@@ -360,4 +360,49 @@ RustCvRss <- function(fit.file, n.stt=4, n.gn=12, t.ko=1, sim.file){
 
   return(list(rss = rss.mat, beta = beta, w = w, sim.dat=sim.dat, fit.dat = fit,
               lambda=lmbd.mat[,1], beta.fit=beta.f, w.fit=w.f))
+}
+
+RustCvRssGridClst <- function(fit.file, n.stt=4, n.gn=120, t.ko=29, sim.file, m.cl) {
+
+  load(fit.file)
+  load(sim.file)
+
+
+  rss.mat <- matrix(NA, length(fit), length(t.dat)-1)
+
+  for (i.l in 1:length(fit) ) {
+    for (i.t in seq(t.ko, length.out = length(t.dat) - 1)) {
+      bt <- fit[[i.l]][[i.t]]$beta
+      w.fit <- fit[[i.l]][[i.t]]$w
+      rep.fit <- rust.kStt(w.fit, bt,  t.dat)
+      rss.mat[i.l, i.t - t.ko + 1] <- sum((log2(g.dat[, i.t - t.ko + 2] + 1) -
+                                           log2(rep.fit$y[, i.t - t.ko + 2] +1) )^2 )
+    }
+  }
+
+  rss.grid <- data.frame(rss=apply(rss.mat, 1, sum), m = (m.cl[, 1]), lambda=(m.cl[, 2]))
+
+  p.rss.heat <- ggplot(rss.grid, aes(x = as.factor(lambda), y = as.factor(m))) +
+    geom_tile(aes(fill = rss), colour = 'white') +
+      scale_fill_gradient(low = 'white', high = 'steelblue') +
+        ggtitle(' ') +
+        theme_bw() +
+          labs(x='lambda', y='m', fill='RSS')
+
+  p.rss.l <- ggplot(rss.grid, aes(x=lambda, y=rss, colour=as.factor(m)))+
+    geom_point() +
+      geom_line() +
+        ggtitle(paste(n.stt, 'states') ) +
+        theme_bw() +
+          labs(colour = ' m')
+
+
+  p.rss.m <- ggplot(rss.grid, aes(x=m, y=rss, colour=as.factor(lambda)))+
+    geom_point() +
+      geom_line() +
+        ggtitle(' ') +
+        theme_bw() +
+          labs(colour = ' lambda')
+
+  return(list(rss.df=rss.grid, heat=p.rss.heat, fn.l=p.rss.l, fn.m=p.rss.m))
 }
