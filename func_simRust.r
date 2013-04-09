@@ -81,19 +81,17 @@ rust.simSnglCl <- function(nCells = 200,nGenes = 9, tau = c(3.5,5,14.5), nStates
 addNoise <- function(sim = NULL, ns.sd, ns.type, gData = NULL){
   if(is.null(gData) & exists('gsim', where = sim))
     gData <- sim$gsim
-  else if(is.null(sim) & !is.null(gData))
+
 
 
   if(ns.type==1){
     datsim <- log2(gData) + abs(rowMeans(log(gData)))*matrix(rnorm(length(gData), sd=ns.sd), dim(gData))
     datasim <- 2^(datsim)
-    return(datasim)
   } else if(ns.type==2) {
     datsim <- log2(gData) + matrix(rnorm(length(gData), sd=ns.sd), dim(gData))
     datasim <- 2^(datsim)
-    return(datasim)
   } else if(ns.type==3) {
     datasim <- gData + matrix(rnorm(length(gData), sd=ns.sd), dim(gData))
-    return(datasim)
   }
+  return(datasim)
 }
