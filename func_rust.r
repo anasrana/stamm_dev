@@ -25,7 +25,7 @@ rust.clst.fit <- function(gData, tData, lambda, n.states, fit.as='log2Dat', rSmp
   cl <- rust.clustering(gData, km.k=6)
   rnd.sample <- rust.sampl(gData, rSmpl.size=rSmpls, n.randSmpl=10)
 
-  if(length(n.states)==1){
+  if (length(n.states)==1) {
 
     ## Fit the cluster centroids to fix w
     ct.fit <- rust.centroid.fit(dat.cntrd=cl$clst$centers, t.dat=tData, lambda,
@@ -33,7 +33,7 @@ rust.clst.fit <- function(gData, tData, lambda, n.states, fit.as='log2Dat', rSmp
                                 reps=reps, n.smpl=n.smpl, fit.pll=fit.pll, gData=gData)
 
     ms.stts <- list(rss=ct.fit$rss, bic=ct.fit$bic, aic=ct.fit$aic)
-  } else if(length(n.states)>1) {
+  } else if (length(n.states)>1)  {
     ## Fit the cluster centroids to fix w
     ms.stts <- vector('list', length(n.states))
     names(ms.stts) <- paste('stt',n.states, sep='')
@@ -71,7 +71,7 @@ rust.centroid.fit <- function(dat.cntrd, t.dat, lambda, n.stt, fit.as, rSmpls, r
   ms.rss <-  10^10
   for(is in 1:reps){
     tmp.fit <- RustFitKstt(gData=dat.cntrd, tData=t.dat, lambda=lambda, n.states=n.stt, fit.as=fit.as)
-    if(tmp.fit$ms[1]<ms.rss){
+    if (tmp.fit$ms[1]<ms.rss) {
       cl.fit <- tmp.fit
       ms.rss <- tmp.fit$ms[1]
     }
@@ -81,7 +81,7 @@ rust.centroid.fit <- function(dat.cntrd, t.dat, lambda, n.stt, fit.as, rSmpls, r
   w <- cl.fit$w
 
   cat('\ntransition_rates_fit= \n')
-  if(n.stt>2)
+  if (n.stt>2 )
     print(diag(w[-1,]))
   else
     print(w)
@@ -128,7 +128,7 @@ rust.centroid.fit <- function(dat.cntrd, t.dat, lambda, n.stt, fit.as, rSmpls, r
 RustFitGnlst <- function(gName, gData, tData, lambda, n.states, w, fit.pll=FALSE){
 
   gName <- as.list(gName)
-  if(fit.pll){
+  if (fit.pll) {
     fit.gnes <- mclapply(gName, function(x)
                      cl.fit = RustFitKstt(gData=gData[x,], tData=tData, lambda=lambda,
                        n.states=n.states, w=w, fix.w=TRUE))
@@ -171,7 +171,7 @@ RustFitGnlst <- function(gName, gData, tData, lambda, n.states, w, fit.pll=FALSE
 ##' @return rnd.sample random samples from gene list without rep.gns
 ##' @author anas ahmad rana
 rust.clustering <- function(gData, km.init=100, km.k=NULL, rSmpl.size=NULL){
-  if(is.null(km.k)){
+  if (is.null(km.k)) {
     stop('choose number of states km.k') #check in number of clusters is given STOP if not
   }
 
@@ -183,7 +183,7 @@ rust.clustering <- function(gData, km.init=100, km.k=NULL, rSmpl.size=NULL){
   for(i.init in 1:km.init){
     tmp <- kmeans(x=gData, centers=km.k, iter.max=100)
     tmp.obj <- min(tmp.obj, tmp$tot.withinss)
-    if(tmp.obj == tmp$tot.withinss){
+    if (tmp.obj == tmp$tot.withinss) {
       cl.kmns <- tmp
     }
   }
@@ -212,7 +212,7 @@ rust.clustering <- function(gData, km.init=100, km.k=NULL, rSmpl.size=NULL){
 ##' @author anas ahmad rana
 rust.sampl <- function(gData, rSmpl.size, n.randSmpl, rep.gns=NULL){
   km.rnd <- NULL
-  if(!is.null(rep.gns)){
+  if (!is.null(rep.gns)) {
     for(iR in 1:length(rSmpl.size)){
       km.rnd <- c(km.rnd, list(replicate(n.randSmpl, sample(x=rownames(gData[!rownames(gData) %in% rep.gns,])
                                                             ,size=rSmpl.size[iR]))))
@@ -248,12 +248,12 @@ rust.sampl <- function(gData, rSmpl.size, n.randSmpl, rep.gns=NULL){
 ##' @author anas ahmad rana
 RustFitKstt <- function(gData, tData, lambda = 0.01, n.states = 3, fix.w=FALSE, w=NULL) {
   p <- nrow(gData)
-  if(fix.w){
+  if (fix.w) {
     p <- 1
-    x0 <- runif( p* n.states)
+    x0 <- runif ( p* n.states )
     wFit <- w
-  } else if(fix.w==FALSE) {
-    x0 <- runif( (n.states - 1) + nrow(gData) * n.states)
+  } else if (fix.w==FALSE)  {
+    x0 <- runif ( (n.states - 1) + nrow(gData) * n.states )
     wFit <- NULL
   }
 
@@ -265,7 +265,7 @@ RustFitKstt <- function(gData, tData, lambda = 0.01, n.states = 3, fix.w=FALSE, 
 
 
   fun <- function(x){
-      tmp <- rust.par(x=x, n.states=n.states, p=p, fix.w=fix.w, wFit=wFit)
+      tmp <- RustPar(x=x, n.states=n.states, p=p, fix.w=fix.w, wFit=wFit)
       wFit <- tmp$w
       betaFit <- tmp$beta
       fit <- rust.kStt(wFit, betaFit, tData)
@@ -278,11 +278,11 @@ RustFitKstt <- function(gData, tData, lambda = 0.01, n.states = 3, fix.w=FALSE, 
 
   res <- nlminb(x0, fun, lower=0,
                 control=list(iter.max = 10000, eval.max=7000, rel.tol=10^-14, sing.tol=10.^-7))
-  par <- rust.par(gData, res$par, n.states, fix.w=fix.w, wFit=w)
+  par <- RustPar(gData, res$par, n.states, fix.w=fix.w, wFit=w)
 
   n <- ncol(gData)
 
-  if(fix.w){
+  if (fix.w) {
     rss <- res$objective - lambda*sum(res$par)
     obj <- rss
     names(obj) <- 'rss'
@@ -316,7 +316,7 @@ rust.bic <- function(rss, n, beta, b.thresh = 10^-4){
 ##' Reshapes parameter vecot, x, into beta matrix and w matrix (or only beta matrix)
 ##'
 ##' .. content for \details{} ..
-##' @title rust.par
+##' @title RustPar
 ##' @param gData data matrix used for naming beta
 ##' @param x parameter vector to reshape into beta and w
 ##' @param n.states number of states in model
@@ -324,33 +324,37 @@ rust.bic <- function(rss, n, beta, b.thresh = 10^-4){
 ##' @param fix.w logical if w is kept fixed or not
 ##' @return The function returns w only if fix.w=F and it returns a beta matrix rearranged from the x vector.
 ##' @author anas ahmad rana
-rust.par <- function(gData=NULL, x, n.states, p=nrow(gData), fix.w=FALSE, wFit=NULL){
+RustPar <- function(gData=NULL, x, n.states, p=nrow(gData), fix.w=FALSE, wFit=NULL, fit.cent=FALSE){
   ## only rearrange
-  if(fix.w){
-    if(length(x)!=n.states)
+  if (fit.cent) {
+    p <- nrow(gData)
+    betaFit <- matrix(x, p, n.states)
+    return(list(w=wFit, beta=betaFit))
+  } else if (fix.w && !fit.cent) {
+    if (length(x) != n.states )
       stop('No of parameters has to equal no of states when fitting per gene')
     betaFit <- matrix( x, 1, n.states)
     return(list(w=wFit, beta=betaFit))
-  } else{
+  } else {
     ## W matrix from x[1:n-1]
-    if(n.states==2){
+    if (n.states==2) {
       wFit <- matrix(0, n.states, n.states)
       wFit[2,1] <- x[1]
-    } else if(n.states >=3) {
+    } else if (n.states >=3)  {
       wFit <- matrix(0, n.states, n.states)
       diag(wFit[-1, ]) <- x[1:(n.states - 1)]
     } else {
       wFit <- NULL
     }
     ## Assign other x values to beta
-    if(n.states==1){
+    if (n.states==1) {
       betaFit <- matrix( x, p, n.states)
-    } else{
+    } else {
       lnx <- length(x)
       p <- {lnx - n.states + 1}/ n.states
       betaFit <- matrix( x[-c(1:(n.states - 1))], p, n.states)
     }
-    if(!is.null(gData)){
+    if (!is.null(gData)) {
       rownames(betaFit) <- rownames(gData)
     }
     return(list(w=wFit, beta=betaFit))
@@ -374,7 +378,7 @@ rust.kStt <- function(wFit = NULL, betaFit, t){
   n <- length(t)
   p <- nrow(betaFit)
   ## create new matrix containing -offdiag on diag
-  if(!is.null(wFit)){
+  if (!is.null(wFit)) {
     odiagElements <- diag(wFit[-1, , drop=FALSE ])
     diag(wFit) <- c(- odiagElements,0)
 
@@ -393,4 +397,62 @@ rust.kStt <- function(wFit = NULL, betaFit, t){
     P <- 1
   }
   return(list(y=S, prob=P))
+}
+
+## ******************************************************************************************
+## ********************[ TESTING ]****************************************
+## ******************************************************************************************
+RustFitKsttWpen <- function(gData, tData, lambda = 0.01, n.states = 3, fix.w=FALSE, w=NULL) {
+  p <- nrow(gData)
+  if (fix.w) {
+    p <- 1
+    x0 <- runif ( p* n.states )
+    wFit <- w
+  } else if (fix.w==FALSE)  {
+    x0 <- runif ( (n.states - 1) + nrow(gData) * n.states )
+    wFit <- NULL
+  }
+
+  g.dat.l <- log2(gData + 1)
+  if ( !is.vector(gData) )
+    g.nl <- apply(gData, 1, sd)
+  else
+    g.nl <- sd(gData)
+
+
+  fun <- function(x){
+      tmp <- RustPar(x=x, n.states=n.states, p=p, fix.w=fix.w, wFit=wFit)
+      wFit <- tmp$w
+      betaFit <- tmp$beta
+      fit <- rust.kStt(wFit, betaFit, tData)
+      rss <- ((log2(fit$y + 1) - g.dat.l))^2
+      n.wUpen  <- sum(diag(wFit[-1, ]) < rep(1, n.states - 1) &
+                     diag(wFit[-1, ]) > rep(1/max(tData), n.states -1))
+      n.wIpen <- n.states - 1 - n.wUpen
+      penalty <- lambda*sum(abs(betaFit)/g.nl) + n.wUpen * 1/50 + n.wIpen * 10^30
+      ss <- c(rss,penalty)
+      obj <- sum(ss)
+      obj
+    }
+
+  res <- nlminb(x0, fun, lower=0,
+                control=list(iter.max = 10000, eval.max=7000, rel.tol=10^-14, sing.tol=10.^-7))
+  par <- RustPar(gData, res$par, n.states, fix.w=fix.w, wFit=w)
+
+  n <- ncol(gData)
+
+  if (fix.w) {
+    rss <- res$objective - lambda*sum(res$par)
+    obj <- rss
+    names(obj) <- 'rss'
+  } else {
+    n.wUpen  <- sum(diag(par$w[-1, ]) < rep(1, n.states - 1) &
+                    diag(par$w[-1, ]) > rep(1/max(tData), n.states -1))
+    n.wIpen <- n.states - 1 - n.wUpen
+    rss <- res$objective - lambda*sum(res$par[-c(1:(n.states -1))]) - n.wUpen * 1/50 - n.wIpen * 10^70
+    obj <- rust.bic(rss, n, par$beta)
+
+  }
+
+  return(list(fit=res, w=par$w, beta=par$beta, ms=obj))
 }
