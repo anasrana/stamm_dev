@@ -274,13 +274,13 @@ PlotWmatConvClust <- function(w.cl, tau, plot.as=FALSE, title.g=''){
     dat.sim <- data.frame(y.val=1/tau, ind=as.factor(1:length(tau)))
     y.lab <- "Transition rate"
   }
-  x.lab <- "No. of k-means clusters"
+  x.lab <- "No. of clusters"
   cl.scl <- c(2, seq(5, ncol(w.cl) +1, 5))
 
   if(plot.as == 'diffw'){
     ggplot(dat.cl, aes(x = cl, y = y.val, col = ind)) +
       geom_point(size = 2) +
-        geom_line(size = 0.4, aes(linetype = ind)) +
+        geom_line(size = 1, aes(linetype = ind)) +
           geom_hline(yintercept=dat.sim$y.val, col='black',
                      linetype='dashed') +
                        scale_x_continuous(breaks = cl.scl) +
@@ -298,7 +298,7 @@ PlotWmatConvClust <- function(w.cl, tau, plot.as=FALSE, title.g=''){
   } else {
     ggplot(dat.cl, aes(x = cl, y = y.val, col = ind)) +
       geom_point(size = 2) +
-        geom_line(size = 0.4, aes(linetype = ind)) +
+        geom_line(size = 1, aes(linetype = ind)) +
           geom_hline(yintercept=dat.sim$y.val, col=dat.sim$ind,
                      linetype='dashed', alpha=0.5) +
                        scale_x_continuous(breaks = cl.scl) +
@@ -349,7 +349,7 @@ RustCvRss <- function(fit.file, n.stt=4, n.gn=12, t.ko=1, sim.file){
   rss.mat <- matrix(NA, length(fit), length(t.dat)-1)
   for ( i.l in 1:length(fit) ) {
     for ( i.t in 2:length(t.dat) ) {
-      beta[i.l, i.t-1] <- sum((fit[[i.l]][[i.t]]$beta - sim.dat$beta)^2)
+      beta[i.l, i.t-1] <- sum(((fit[[i.l]][[i.t]]$beta - sim.dat$beta))^2)
       w[i.l, i.t-1] <- sum((fit[[i.l]][[i.t]]$w - w.sim)^2)
       bt <- fit[[i.l]][[i.t]]$beta
       w.fit <- fit[[i.l]][[i.t]]$w
@@ -359,7 +359,7 @@ RustCvRss <- function(fit.file, n.stt=4, n.gn=12, t.ko=1, sim.file){
   }
 
   return(list(rss = rss.mat, beta = beta, w = w, sim.dat=sim.dat, fit.dat = fit,
-              lambda=lmbd.mat[,1], beta.fit=beta.f, w.fit=w.f))
+              lambda = lmbd.mat[,1], beta.fit=beta.f, w.fit = w.f ))
 }
 
 RustCvRssGridClst <- function(fit.file, n.stt=4, n.gn=120, t.ko=29, sim.file, m.cl) {
