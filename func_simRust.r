@@ -40,7 +40,7 @@ RustSim <- function(nCells = 200,nGenes = 9, tau = c(3.5,5,14.5), nStates = 2,
   ## Assigns randomvalues to beta if not passed as argument
   if (is.null(betaVec)) {
     betaVec <- rnorm(nGenes * nStates, sd = 5)
-    betaVec[betaVec<0]  <- 10^(-40)
+    betaVec[betaVec < 0]  <- 10^(-40)
   }
   ## Reshape betavector as matrix/
   betaVals <- matrix(betaVec, nGenes, nStates)
@@ -50,7 +50,7 @@ RustSim <- function(nCells = 200,nGenes = 9, tau = c(3.5,5,14.5), nStates = 2,
   for (iCells in 1:nCells) {
     gSimC <- NULL
     for (jStates in 1:(nStates - 1)) {
-      nSentries <- ceiling(jumpTime[jStates, iCells]/dt)
+      nSentries <- ceiling(jumpTime[jStates, iCells] / dt)
       val_tmp <- betaVals[, rep.int(jStates, nSentries)]
       gSimC <- cbind(gSimC,  val_tmp + rnorm(length(val_tmp), sd = sttNoise[jStates]) )
       rm(val_tmp)
@@ -58,7 +58,7 @@ RustSim <- function(nCells = 200,nGenes = 9, tau = c(3.5,5,14.5), nStates = 2,
     nSentries <- (nPoints - ncol(gSimC))
     if (nSentries > 0) {
       val_fin <- betaVals[, rep.int(nStates, nSentries)]
-      gSimC <- cbind(gSimC, val_fin + rnorm(length(val_fin),sd = sttNoise[nStates]))
+      gSimC <- cbind(gSimC, val_fin + rnorm(length(val_fin), sd = sttNoise[nStates]))
       rm(val_fin)
     }
     gSim <- gSim + gSimC[, 1:nPoints] / nCells
@@ -85,13 +85,11 @@ AddNoise <- function(sim = NULL, ns.sd, ns.type, gData = NULL){
   if (is.null(gData) & exists('gsim', where = sim) )
     gData <- sim$gsim
 
-
-
   if (ns.type == 1) {
     datsim <- log2(gData) + abs(rowMeans(log(gData))) *
       matrix(rnorm(length(gData), sd = ns.sd), dim(gData))
     datasim <- 2^(datsim)
-  } else if (ns.type==2)  {
+  } else if (ns.type == 2)  {
     datsim <- log2(gData) + matrix(rnorm(length(gData), sd = ns.sd), dim(gData))
     datasim <- 2^(datsim)
   } else if (ns.type == 3)  {
