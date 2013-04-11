@@ -268,7 +268,7 @@ RustFitKstt <- function(gData, tData, lambda = 0.01, n.states = 3, fix.w=FALSE, 
       tmp <- RustPar(x=x, n.states=n.states, p=p, fix.w=fix.w, wFit=wFit)
       wFit <- tmp$w
       betaFit <- tmp$beta
-      fit <- rust.kStt(wFit, betaFit, tData)
+      fit <- RustKstt(wFit, betaFit, tData)
       rss <- ((log2(fit$y + 1) - g.dat.l))^2
       penalty <- lambda*sum(abs(betaFit)/g.nl)
       ss <- c(rss,penalty)
@@ -277,7 +277,7 @@ RustFitKstt <- function(gData, tData, lambda = 0.01, n.states = 3, fix.w=FALSE, 
     }
 
   res <- nlminb(x0, fun, lower=0,
-                control=list(iter.max = 10000, eval.max=7000, rel.tol=10^-14, sing.tol=10.^-7))
+                control=list(iter.max = 10000, eval.max=7000, rel.tol=10^-14, sing.tol=10.^-10))
   par <- RustPar(gData, res$par, n.states, fix.w=fix.w, wFit=w)
 
   n <- ncol(gData)
@@ -368,13 +368,13 @@ RustPar <- function(gData=NULL, x, n.states, p=nrow(gData), fix.w=FALSE, wFit=NU
 ##' points, it then calculates a trajectory
 ##'
 ##'
-##' @title rust.kStt
+##' @title RustKstt
 ##' @param wFit W transition matrix default=NULL
 ##' @param betaFit beta matrix p x T(n)
 ##' @param t time points
 ##' @return S unlogged trajectory for the arguments. P state occupation probabilities.
 ##' @author anas ahmad rana
-rust.kStt <- function(wFit = NULL, betaFit, t){
+RustKstt <- function(wFit = NULL, betaFit, t){
   n <- length(t)
   p <- nrow(betaFit)
   ## create new matrix containing -offdiag on diag
