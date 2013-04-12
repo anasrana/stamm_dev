@@ -18,7 +18,7 @@ library(expm)
 ##' @param stt.noise vector of standard deviations for Gaussian noise per state (default 0)
 RustSim <- function(n.cells = 200, n.genes = 9, tau = c(3.5, 5, 14.5), n.states = 2,
                     beta.vec = NULL, dt = 0.01, end.time = 30, av.noise = 0.01,
-                    stt.noise = rep(0, n.states)) {
+                    stt.noise = rep(0, n.states), jump.dist = 'exp', sd.par = NULL) {
 
   ## Checking if some of the arguments passed are the right format and adjusting if possible
   if (!is.vector(beta.vec) & !is.null(beta.vec)) {
@@ -27,15 +27,17 @@ RustSim <- function(n.cells = 200, n.genes = 9, tau = c(3.5, 5, 14.5), n.states 
   if (length(stt.noise) != n.states & is.vector(stt.noise)) {
     stt.noise <- rep(stt.noise, n.states)
   }
-  ## get jump time from the state occupation time $/tau$
-  jump.time <- JumpTime(tau, n.states, n.cells)
+  ## get jump time from the state occupation time use function JumpTime
+  if (jump.dist != 'exp' & is.null(sd.par))
+    sd.par  <- end.time / n.states
+  jump.time <- JumpTime(tau, n.states, n.cells, jump.dist = jump.dist, sd.par = sd.par)
   ## Checks if beta values are passed in the argument (as vector)
   ## Assigns randomvalues to beta if not passed as argument
   if (is.null(beta.vec)) {
     beta.vec <- rnorm(n.genes * n.states, sd = 5)
     beta.vec[beta.vec < 0]  <- 10^(-40)
   }
-  ## Reshape betavector as matrix/
+  ## Reshape betavector as matrix
   betaVals <- matrix(beta.vec, n.genes, n.states)
   ## Initialise results matrix with zeros
   gSim <- matrix(rep(0, n.genes * end.time / dt), n.genes, end.time / dt)
@@ -98,12 +100,20 @@ AddNoise <- function(sim = NULL, ns.sd, ns.type, gData = NULL) {
 ##' @param tau average transition times
 ##' @param n.states number of states simulated
 ##' @param n.cells number of cells simulated
+##' @param jump.dist Distribution of jump time (default = 'exp')
+##' @param sd.par second parameter to use for non exponential distributions
 ##' @return jump.time
 ##' @author anas ahmad rana
-JumpTime  <- function(tau, n.states, n.cells) {
+JumpTime  <- function(tau, n.states, n.cells, jump.dist = 'exp', sd.par = NULL) {
   jump.time <- NULL
-  for (i in 1:(n.states - 1)) {
-    jump.time <- rbind(jump.time, rexp(n.cells, 1 / tau[i]))
+  if (jump.dist == 'exp') {
+    for (i in 1:(n.states - 1)) {
+      jump.time <- rbind(jump.time, rexp(n.cells, 1 / tau[i]))
+    }
+  } else if (jump.dist == 'gaus') {
+    for (i in 1:(n.states -1)) {
+      jump.time  <- rbind(jump.time, abs(rnorm(n = n.cells, mean = 1 / tau[i], sd = sd.par)))
+    }
   }
   return(jump.time)
 }
