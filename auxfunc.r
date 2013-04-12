@@ -78,7 +78,7 @@ PlotCompTrajRust <- function(g.dat, t, b.fit, w){
   return(t.g)
 }
 
-PlotTrajRust <- function(g.dat, t){
+PlotTrajRust <- function(g.dat, t, p.title = ''){
 
   p <- nrow(g.dat)
   sim.dat <- data.frame(g=as.vector(g.dat), gn = factor(rep( (rownames(g.dat)), length(t))),
@@ -91,14 +91,15 @@ PlotTrajRust <- function(g.dat, t){
           theme_bw() +
             xlab('time') +
               ylab('gene expression') +
-                theme(legend.key.size=unit(0.3, 'cm'),
-                      legend.text = element_text(size=10, face='bold'),
-                      axis.title.x = element_text(face='bold', size=20),
-                      axis.title.y = element_text(face='bold', size=20),
-                      strip.text.x = element_text(size=12),
-                      strip.background = element_rect(colour = NA),
-                      axis.text.x = element_text(size=10),
-                      axis.text.y = element_text(size=10))
+                ggtitle(p.title) +
+                  theme(legend.key.size=unit(0.3, 'cm'),
+                        legend.text = element_text(size=10, face='bold'),
+                        axis.title.x = element_text(face='bold', size=20),
+                        axis.title.y = element_text(face='bold', size=20),
+                        strip.text.x = element_text(size=12),
+                        strip.background = element_rect(colour = NA),
+                        axis.text.x = element_text(size=10),
+                        axis.text.y = element_text(size=10))
 
   return(t.g)
 }
@@ -199,7 +200,7 @@ PlotCvFacetLambdaRust <- function(dat.mat, lambda, x.lab='predicted t-point', y.
 }
 
 PlotCvFacetTrust <- function(dat.mat, lambda, x.lab='lambda', y.lab='RSS', t.dat,
-                               title.g='RSS of t-pt knockout, facet predicted t'){
+                             title.g='RSS of t-pt knockout, facet predicted t'){
   rss.tk <- data.frame(rss=as.vector(rss.mat), lambda=rep(lambda, length(t.dat)-1),
                        t.ko = rep(2:(length(t.dat) ), each=nrow(dat.mat)))
 
@@ -386,23 +387,23 @@ RustCvRssGridClst <- function(fit.file, n.stt=4, n.gn=120, t.ko=29, sim.file, m.
     geom_tile(aes(fill = rss), colour = 'white') +
       scale_fill_gradient(low = 'white', high = 'steelblue') +
         ggtitle(' ') +
-        theme_bw() +
-          labs(x='lambda', y='m', fill='RSS')
+          theme_bw() +
+            labs(x='lambda', y='m', fill='RSS')
 
   p.rss.l <- ggplot(rss.grid, aes(x=lambda, y=rss, colour=as.factor(m)))+
     geom_point() +
       geom_line() +
         ggtitle(paste(n.stt, 'states') ) +
-        theme_bw() +
-          labs(colour = ' m')
+          theme_bw() +
+            labs(colour = ' m')
 
 
   p.rss.m <- ggplot(rss.grid, aes(x=m, y=rss, colour=as.factor(lambda)))+
     geom_point() +
       geom_line() +
         ggtitle(' ') +
-        theme_bw() +
-          labs(colour = ' lambda')
+          theme_bw() +
+            labs(colour = ' lambda')
 
   return(list(rss.df=rss.grid, heat=p.rss.heat, fn.l=p.rss.l, fn.m=p.rss.m))
 }
