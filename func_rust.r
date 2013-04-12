@@ -275,9 +275,9 @@ RustFitKstt <- function(gData, tData, lambda = 0.01, n.states = 3, fix.w=FALSE, 
       obj <- sum(ss)
       obj
     }
-
-  res <- nlminb(x0, fun, lower=0,
-                control=list(iter.max = 10000, eval.max=7000, rel.tol=10^-14, sing.tol=10.^-10))
+  par.scale <- c(rep(1,n.states-1), rep(apply(gData,1,max), n.states))
+  res <- nlminb(x0, fun, lower=0, upper = max(gData), scale = 1 / par.scale,
+                control=list(iter.max = 10000, eval.max=7000, rel.tol=10^-14, sing.tol=10^-14))
   par <- RustPar(gData, res$par, n.states, fix.w=fix.w, wFit=w)
 
   n <- ncol(gData)
