@@ -177,6 +177,49 @@ RustKstt <- function(wFit=NULL, betaFit, t){
 ## Clustering and fitting centroids
 ## ******************************************************************************************
 
+##' Fits centroid for given number of cluster sizes and fixed number of states fits
+##'
+##' .. content for \details{} ..
+##' @title
+##' @param g.dat
+##' @param t.dat
+##' @param g.cent
+##' @param n.cl
+##' @param n.core
+##' @param pen
+##' @param n.stt
+##' @return
+##' @author anas ahmad rana
+RustFitCentroid.p <- function(g.dat, t.dat, g.cent = NULL, n.cl = c(2, seq(5, 30, 5)),
+                              n.core = 20, pen = 0, n.stt = 4) {
+  ## First cluster all genes
+  if (is.null(g.cent)) {
+    cl.dat <- RustCluster(g.dat, n.cl)
+    g.cent <- cl.dat[["cent.dat"]]
+    rep.gns <- cl.dat[["rep.gns"]]
+  }
+  ## Fit all cluster sizes in paralell
+  options(cores=n.core)
+  fit <- mclapply(1:length(g.cent), function(x){
+    fit.conv <- 10^10
+    fit.iter  <- 1
+    max.fit.iter <- 5
+    while (fit.conv != 0 | fit.iter > max.fit.iter) {
+      fit <- RustFitKstt(g.cent[[x]], t.dat , lambda = pen, n.states = n.stt)
+      fit.conv <- fit$fit$convergence
+      fit.iter  <- fit.iter + 1
+    }
+    if (fit.conv != 0){
+      print('ERROR: did not converge')
+    }
+    print(paste('fit: cl = ', n.cl[x], 'with RSS =',fit$ms[1], '... done!'))
+    return(fit)
+  }, #end of function in mclapply
+                  mc.preschedule = TRUE)
+
+  return(list(fit = fit, cl.dat = cl.dat))
+}
+
 ##' Scale data and calculate k-means cluster for all vector elements
 ##' of n.cl
 ##'
