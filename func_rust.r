@@ -60,11 +60,11 @@ RustFitKstt <- function(g.dat, t.dat, lambda = 0.01, n.states = 3, fix.w=FALSE, 
 
   n <- ncol(g.dat)
   if (fix.w) {
-    rss <- res$objective - lambda*sum(res$par)
+    rss <- res$objective - lambda * sum(par$beta)
     obj <- rss
     names(obj) <- 'rss'
   } else {
-    rss <- res$objective - lambda*sum(res$par[-c(1:(n.states -1))])
+    rss <- res$objective - lambda * sum(par$beta)
     obj <- RustBic(rss, n, par$beta)
 
   }
@@ -376,51 +376,6 @@ RustFitGnlst <- function(gName, g.dat, t.dat, lambda, n.states, w, fit.pll=FALSE
 }
 
 
-
-##' Clusters genes using k-means and returns centers, cluster rep genes, and random samples from genes
-##'
-##' .. content for \details{} ..
-##' @title rust.clustering
-##' @param g.dat time course of data
-##' @param km.init number of intialisations for k-means (default value is 100)
-##' @param km.k number of states for clustering
-##' @param rSmpl.size sizes for random samples, if NULL (default) nothing returned
-##' @param n.randSmpl number of random samples for each size (default is 50)
-##' @return clst k-means clustering output important variable is $cluster and $centers
-##' @return rep.gns genes closest to the centroids
-##' @return rnd.sample random samples from gene list without rep.gns
-##' @author anas ahmad rana
-rust.clustering <- function(g.dat, km.init=100, km.k=NULL, rSmpl.size=NULL){
-  if (is.null(km.k)) {
-    stop('choose number of states km.k') #check in number of clusters is given STOP if not
-  }
-
-  ## Initialise random sample list
-
-
-  ## k-means cluster all the genes from the data set
-  tmp.obj <- 10^30
-  for (i.init in 1:km.init) {
-    tmp <- kmeans(x=g.dat, centers=km.k, iter.max=100)
-    tmp.obj <- min(tmp.obj, tmp$tot.withinss)
-    if (tmp.obj == tmp$tot.withinss) {
-      cl.kmns <- tmp
-    }
-  }
-
-  ## Find representative gene clusters
-  rep.gns <- NULL
-  rep.gns <- sapply(as.list(as.data.frame(t(cl.kmns$centers))),
-                    function(x){
-                      rep.gns <- cbind(rep.gns, which.min(apply(abs(g.dat-x), 1,sum)))
-                    } )
-  rep.gns <- rownames(g.dat[rep.gns,]) #have gene names instead of index to avoid issues
-
-  ## km.cntrd contains the cluster centers trajectory and rep. gene trajectory
-  km.cntrd <- list(centers=cl.kmns$centers, cent.dat=g.dat[rep.gns,])
-
-  return(list(clst=cl.kmns, rep.gns=rep.gns))
- }
 
 ##' .. content for \description{} (no empty lines) ..
 ##'
