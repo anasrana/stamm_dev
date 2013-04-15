@@ -177,6 +177,59 @@ RustKstt <- function(wFit=NULL, betaFit, t){
 ## Clustering and fitting centroids
 ## ******************************************************************************************
 
+##' .. content for \description{} (no empty lines) ..
+##'
+##' .. content for \details{} ..
+##' @title
+##' @param g.dat
+##' @param t.dat
+##' @param stt.v
+##' @param n.cl
+##' @param n.core
+##' @return
+##' @author anas ahmad rana
+RustCrossValClust.p <- function(g.dat, t.dat, stt.v, n.cl = c(2, seq(5, 30, 5)), n.core = 20) {
+  ## cluster genes
+  cl.dat <- RustCluster(g.dat, n.cl = n.cl)
+  g.cen <- cl.dat[['cent.dat']]
+  ## define matrix for parameters in mclapply
+  cs.mat <- cbind(rep(stt.v, length(n.cl)), rep(n.cl, length(stt.v)))
+  ## start mcl apply for all time-p knockout
+  n.ml <- length(stt.v) * length(n.cl)
+  fit.k.m <- mclapply(1:n.ml, function(x) {
+    x.name <- paste('m.', cs.mat[x, 2], sep='')
+    i.v <- 1
+    ## First fit all the data for different m and k
+    fit.cl <- vector('list', length(t.dat))
+    fit.conv <- 10^10
+    fit.iter <- 1
+    while (fit.conv != 0 | fit.iter > 5) {
+      fit <- RustFitKstt(g.cen[[x.name]], t.dat, lambda=0, n.states = cs.mat[x, 1])
+      fit.conv <- fit$fit$convergence
+      fit.iter <- fit.iter + 1
+    }
+    print(paste('done all:', cs.mat[x, 1]))
+    fit.cl[[i.v]]  <- fit
+    ## Fit 2:end t-ko for different m and k
+    for (i.v in 2:length(t.dat)) {
+      fit.conv <- 10^10
+      fit.iter <- 1
+      while (fit.conv != 0 | fit.iter > 5) {
+        fit <- RustFitKstt(g.cen[[x.name]][, -i.v], t.dat[-i.v], lambda=0,
+                           n.states = cs.mat[x, 1])
+        fit.conv <- fit$fit$convergence
+        fit.iter <- fit.iter + 1
+      }
+      fit.cl[[i.v]]  <- fit
+    }
+    names(fit.cl) <- paste('tpt.', 1:length(t.dat), sep='')
+    print(paste('done t.ko:', cs.mat[x, 1]))
+  }, #end of function in mclapply
+                      mc.preschedule = TRUE, mc.cores = n.core)
+  names(fit.k.m) <- paste('k.', cs.mat[, 1],'_m.', cs.mat[, 2], sep='')
+  return(list(cl.dat = cl.dat, fit = fit.k.m))
+}
+
 ##' Fits centroid for given number of cluster sizes and fixed number of states fits
 ##'
 ##' .. content for \details{} ..
