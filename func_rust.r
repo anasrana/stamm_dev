@@ -174,6 +174,50 @@ RustKstt <- function(wFit=NULL, betaFit, t){
 }
 
 ## ******************************************************************************************
+## Clustering and fitting centroids
+## ******************************************************************************************
+
+##' Scale data and calculate k-means cluster for all vector elements
+##' of n.cl
+##'
+##' .. content for \details{} ..
+##' @title RustCluster
+##' @param g.dat data to be clustered
+##' @param n.cl vector of arbitrary length
+##' @return
+##' @author anas ahmad rana
+RustCluster <- function(g.dat, n.cl) {
+  ## Scale input data to unit variance
+  g.sd <- apply(g.dat, 1, sd)
+  g.norm <- (g.dat)/g.sd
+  ## initialise empty lists
+  g.cl <- vector('list', length(n.cl))
+  g.cent <- vector('list', length(n.cl))
+  g.cl.names <- vector('list', length(n.cl))
+  ## perform a k-means clustering
+  for (i.n in 1:length(n.cl)) {
+    i.m  <- n.cl[i.n]
+    g.kn.cl <- kmeans(g.norm,i.m, iter.max=100, nstart=100)
+    g.cl[[i.n]] <- g.kn.cl
+    g.cent[[i.n]] <- g.kn.cl$centers
+    g.rep.names <- rep(NA, i.m)
+    for (i.clg in 1:nrow(g.kn.cl$centers)) {
+      d.g <- apply((abs(g.norm - g.kn.cl$centers[i.clg, ])), 1, sum)
+      tmp <- which(d.g == min(d.g))
+      g.rep.names[i.clg] <- rownames(g.norm)[tmp]
+    }
+    g.cl.names[[i.n]] <- g.rep.names
+  }
+  names(g.cl) <- paste('m.', n.cl, sep='')
+  names(g.cent) <- paste('m.', n.cl, sep='')
+  names(g.cl.names)  <- paste('m.', n.cl, sep='')
+  ## return variables k-means centroid, fit and names of
+  ## representative genes
+  return(list(cent.dat=g.cent, cl.kmean=g.cl, rep.gns=g.cl.names))
+}
+
+
+## ******************************************************************************************
 ## FUNCTIONS TO BE REWRITTEN
 ## ******************************************************************************************
 ## ******************************************************************************************
@@ -216,7 +260,8 @@ rust.clst.fit <- function(g.dat, t.dat, lambda, n.states, fit.as='log2Dat', rSmp
       n.stt <- n.states[i.s]
       ms.rss <-  10^10
 
-      ct.fit <- rust.centroid.fit(dat.cntrd=cl$clst$centers, t.dat=t.dat, lambda, n.stt, fit.as, reps=reps)
+      ct.fit <- rust.centroid.fit(dat.cntrd=cl$clst$centers, t.dat=t.dat, lambda, n.stt,
+                                  fit.as, reps=reps)
       ms.stts[[i.s]] <- list(rss=ct.fit$rss, bic=ct.fit$bic, aic=ct.fit$aic)
     }
   }
