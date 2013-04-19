@@ -14,7 +14,10 @@ PlotCompBetaRust <- function(b.sim, b.fit){
 
   p <- nrow(b.sim)
   k <- ncol(b.sim)
-  b.val <- data.frame(beta=c(as.vector(b.sim), as.vector(b.fit)), tp=factor(rep(c('sim', 'fit'), each=p*k)), stt=rep(rep(1:k, each=p),2), gn=factor(rep(c( (rownames(b.sim)),  (rownames(b.fit)), k))))
+  b.val <- data.frame(beta=c(as.vector(b.sim), as.vector(b.fit)),
+                      tp=factor(rep(c('sim', 'fit'), each=p*k)),
+                      stt=factor(rep(rep(1:k, each=p),2)),
+                      gn=factor(rep(c(rownames(b.sim), rownames(b.fit)), k)))
 
   b.g <- ggplot(b.val) +
     geom_bar(aes(x=stt, y=beta, alpha=tp, fill=stt),
