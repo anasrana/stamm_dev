@@ -10,12 +10,12 @@ require(grid)
 ##' @param b.fit beta matrix from fitting
 ##' @return
 ##' @author anas ahmad rana
-PlotCompBetaRust <- function(b.sim, b.fit){
+PlotCompBetaRust <- function(b.sim, b.fit, type.v = c('true', 'estimate')){
 
   p <- nrow(b.sim)
   k <- ncol(b.sim)
   b.val <- data.frame(beta=c(as.vector(b.sim), as.vector(b.fit)),
-                      tp=factor(rep(c('sim', 'fit'), each=p*k)),
+                      tp=factor(rep(type.v, each=p*k)),
                       stt=factor(rep(rep(1:k, each=p),2)),
                       gn=factor(rep(c(rownames(b.sim), rownames(b.fit)), k)))
 
