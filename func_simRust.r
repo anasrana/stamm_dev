@@ -1,7 +1,7 @@
 library(stats)
 library(BB)                             #use for spg
 library(expm)
-
+library(msm)
 
 ## ----------[ Simulations on single cells]--------------------
 ##' Forward simulation of model using single cells
@@ -110,9 +110,9 @@ JumpTime  <- function(tau, n.states, n.cells, jump.dist = 'exp', sd.par = NULL) 
     for (i in 1:(n.states - 1)) {
       jump.time <- rbind(jump.time, rexp(n.cells, 1 / tau[i]))
     }
-  } else if (jump.dist == 'gaus') {
+  } else if (jump.dist == 't.norm') {
     for (i in 1:(n.states -1)) {
-      jump.time  <- rbind(jump.time, abs(rnorm(n = n.cells, mean = 1 / tau[i], sd = sd.par)))
+      jump.time  <- rbind(jump.time, abs(rtnorm(n = n.cells, mean = 1 / tau[i], sd = sd.par)))
     }
   }
   return(jump.time)
