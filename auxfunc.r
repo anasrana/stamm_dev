@@ -50,12 +50,12 @@ PlotCompBetaRust <- function(b.sim, b.fit, type.v = c('true', 'estimate')){
 ##' @param w fitted w matrix
 ##' @return
 ##' @author anas ahmad rana
-PlotCompTrajRust <- function(g.dat, t, b.fit, w){
+PlotCompTrajRust <- function(g.dat, t, b.fit, w, p.title = ''){
 
 
   p <- nrow(b.fit)
   t.fit <- seq(0,max(t),0.01)
-  g.fit <- rust.kStt(w, b.fit, t=t.fit)
+  g.fit <- RustKstt(w, b.fit, t=t.fit)
   fit.dat <- data.frame(g=as.vector(g.fit$y), gn=factor(rep( (rownames(b.fit)), length(t.fit))),
                         t=rep(t.fit, each=p))
   sim.dat <- data.frame(g=as.vector(g.dat), gn = factor(rep( (rownames(b.fit)), length(t))),
@@ -69,6 +69,7 @@ PlotCompTrajRust <- function(g.dat, t, b.fit, w){
             theme_bw() +
               xlab('time') +
                 ylab('gene expression') +
+                  ggtitle(p.title) +
                   theme(legend.key.size=unit(0.3, 'cm'),
                         legend.text = element_text(size=10, face='bold'),
                         axis.title.x = element_text(face='bold', size=20),
@@ -357,7 +358,7 @@ RustCvRss <- function(fit.file, n.stt=4, n.gn=12, t.ko=1, sim.file){
       w[i.l, i.t-1] <- sum((fit[[i.l]][[i.t]]$w - w.sim)^2)
       bt <- fit[[i.l]][[i.t]]$beta
       w.fit <- fit[[i.l]][[i.t]]$w
-      rep.fit <- rust.kStt(w.fit, bt,  t.dat)
+      rep.fit <- RustKstt(w.fit, bt,  t.dat)
       rss.mat[i.l, i.t-1] <- sum((log2(g.dat[,i.t] + 1) - log2(rep.fit$y[,i.t] +1) )^2 )
     }
   }
@@ -378,7 +379,7 @@ RustCvRssGridClst <- function(fit.file, n.stt=4, n.gn=120, t.ko=29, sim.file, m.
     for (i.t in seq(t.ko, length.out = length(t.dat) - 1)) {
       bt <- fit[[i.l]][[i.t]]$beta
       w.fit <- fit[[i.l]][[i.t]]$w
-      rep.fit <- rust.kStt(w.fit, bt,  t.dat)
+      rep.fit <- RustKstt(w.fit, bt,  t.dat)
       rss.mat[i.l, i.t - t.ko + 1] <- sum((log2(g.dat[, i.t - t.ko + 2] + 1) -
                                            log2(rep.fit$y[, i.t - t.ko + 2] +1) )^2 )
     }
