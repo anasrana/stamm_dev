@@ -279,8 +279,10 @@ PlotWmatConvClust <- function(w.cl, tau, plot.as=FALSE, title.g=''){
     dat.sim <- data.frame(y.val=1/tau, ind=as.factor(1:length(tau)))
     y.lab <- "Transition rate"
   }
-  x.lab <- "No. of clusters"
+  x.lab <- 'number of clusters, m'
   cl.scl <- c(2, seq(5, ncol(w.cl) +1, 5))
+  pcol <- c('#e74c3c', '#27ae60', '#2980b9', '#f39c12')
+  w.leg <- c(expression(w[12]), expression(w[23]), expression(w[34]))
 
   if(plot.as == 'diffw'){
     ggplot(dat.cl, aes(x = cl, y = y.val, col = ind)) +
@@ -302,16 +304,23 @@ PlotWmatConvClust <- function(w.cl, tau, plot.as=FALSE, title.g=''){
                                        plot.title = element_text(face='bold'))
   } else {
     ggplot(dat.cl, aes(x = cl, y = y.val, col = ind)) +
-      geom_point(size = 2) +
+      geom_point(size = 3) +
         geom_line(size = 1, aes(linetype = ind)) +
-          geom_hline(yintercept=dat.sim$y.val, col=dat.sim$ind,
+              geom_hline(yintercept=dat.sim$y.val, colour=pcol[1:3],
                      linetype='dashed', alpha=0.5) +
+                         scale_linetype_manual(values = c('solid', 'dashed', 'dotted'),
+                                               breaks = 1:3, labels = w.leg) +
+                         scale_colour_manual(values = pcol, breaks = 1:3, labels = w.leg) +
                        scale_x_continuous(breaks = cl.scl) +
                          xlab(x.lab) +
                            ylab(y.lab) +
                              ggtitle(title.g) +
                                theme_bw() +
-                                 theme(axis.title.x = element_text(face='bold', size=20),
+                                 theme(legend.key = element_blank(),
+                                       legend.key.width = unit(0.8, 'cm'),
+                                       legend.title = element_blank(),
+                                       legend.text = element_text(size = 14),
+                                       axis.title.x = element_text(face='bold', size=20),
                                        axis.title.y = element_text(face='bold', size=20),
                                        axis.text.x = element_text(size=10),
                                        axis.text.y = element_text(size=10),
