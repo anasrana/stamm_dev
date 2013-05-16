@@ -497,7 +497,19 @@ rust.sampl <- function(g.dat, rSmpl.size, n.randSmpl, rep.gns=NULL){
   return(km.rnd)
 }
 
-
+##' .. content for \description{} (no empty lines) ..
+##'
+##' .. content for \details{} ..
+##' @title
+##' @param g.dat
+##' @param t.dat
+##' @param lambda
+##' @param n.states
+##' @param fix.w
+##' @param w
+##' @param g.n
+##' @return
+##' @author anas ahmad rana
 RustFitKsttArc <- function(g.dat, t.dat, lambda = 0.01, n.states = 3, fix.w=FALSE, w=NULL, g.n = NULL) {
   p <- nrow(g.dat)
   if (fix.w) {
@@ -510,9 +522,9 @@ RustFitKsttArc <- function(g.dat, t.dat, lambda = 0.01, n.states = 3, fix.w=FALS
   }
 
   if (is.null(g.n)) {
-    g.n <- sum(g.dat)
+    g.n <- apply(g.dat, 2, sum)
   }
-  g.r <-
+
 
 
   if ( !is.vector(g.arcsin.t) )
@@ -526,7 +538,8 @@ RustFitKsttArc <- function(g.dat, t.dat, lambda = 0.01, n.states = 3, fix.w=FALS
       wFit <- tmp$w
       betaFit <- tmp$beta
       fit <- RustKstt(wFit, betaFit, t.dat)
-      rss <- ((sqrt(g.n) * arcsin(sqrt(fit$y / g.n)) - g.arcsin.t.l))^2
+      g.nfit <- apply(g.dat, 2, sum)
+      rss <- ((sqrt(g.nfit) * arcsin(sqrt(fit$y / g.nfit)) - g.arcsin.t.l))^2
       penalty <- lambda * sum(abs(betaFit) / g.nl)
       ss <- c(rss, penalty)
       obj <- sum(ss)
