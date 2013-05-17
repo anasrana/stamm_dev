@@ -521,38 +521,29 @@ RustFitKsttArc <- function(g.dat, t.dat, lambda = 0.01, n.states = 3, fix.w=FALS
     wFit <- NULL
   }
 
-  if (is.null(g.n)) {
     g.n <- apply(g.dat, 2, sum)
-  }
-
-
-
-  if ( !is.vector(g.arcsin.t) )
-    g.nl <- apply(g.arcsin.t, 1, sd)
-  else
-    g.arcsin.t <- sqrt(g.n) * arcsin(sqrt(g.dat / g.n))
-    g.nl <- sd(g.arcsin.t)
+    g.asin.t <- sqrt(g.n) * asin(t(sqrt(t(g.dat) / g.n)))
+    g.nl <- sd(g.asin.t)
 
   fun <- function(x){
       tmp <- RustPar(x = x, n.states = n.states, p = p, fix.w = fix.w, wFit = wFit)
       wFit <- tmp$w
       betaFit <- tmp$beta
       fit <- RustKstt(wFit, betaFit, t.dat)
-      g.nfit <- apply(g.dat, 2, sum)
-      rss <- ((sqrt(g.nfit) * arcsin(sqrt(fit$y / g.nfit)) - g.arcsin.t.l))^2
+      rss <- ((sqrt(g.n) *  asin(t(sqrt(t(fit$y) / g.n))) - g.asin.t))^2
       penalty <- lambda * sum(abs(betaFit) / g.nl)
       ss <- c(rss, penalty)
       obj <- sum(ss)
       obj
     }
 
-  par.scale <- c(rep(1, n.states - 1), rep(apply(g.arcsin.t, 1, max), n.states))
-  res <- nlminb(x0, fun, lower = 0, upper = max(g.arcsin.t), scale = 1 / par.scale,
+  par.scale <- c(rep(1, n.states - 1), rep(apply(g.asin.t, 1, max), n.states))
+  res <- nlminb(x0, fun, lower = 0, upper = max(g.asin.t), scale = 1 / par.scale,
                 control=list(iter.max=10000, eval.max=7000, rel.tol=10^-14, sing.tol=10^-14))
 
-  par <- RustPar(g.arcsin.t, res$par, n.states, fix.w=fix.w, wFit=w)
+  par <- RustPar(g.asin.t, res$par, n.states, fix.w=fix.w, wFit=w)
 
-  n <- ncol(g.arcsin.t)
+  n <- ncol(g.asin.t)
   if (fix.w) {
     rss <- res$objective - lambda * sum(par$beta)
     obj <- rss
