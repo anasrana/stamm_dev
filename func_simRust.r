@@ -76,19 +76,22 @@ RustSim <- function(n.cells = 200, n.genes = 9, tau = c(3.5, 5, 14.5), n.states 
 ##' @param gData simulated "expression" data
 ##' @return datasim
 ##' @author anas ahmad rana
-AddNoise <- function(sim = NULL, ns.sd, ns.type, gData = NULL) {
-  if (is.null(gData) & exists('gsim', where = sim) )
-    gData <- sim$gsim
+AddNoise <- function(sim = NULL, ns.sd, ns.type, g.dat = NULL) {
+  if (is.null(g.dat) & exists('gsim', where = sim) )
+    g.dat <- sim$gsim
 
   if (ns.type == 1) {
-    datsim <- log2(gData) + abs(rowMeans(log(gData))) *
-      matrix(rnorm(length(gData), sd = ns.sd), dim(gData))
+    datsim <- log2(g.dat) + abs(rowMeans(log(g.dat))) *
+      matrix(rnorm(length(g.dat), sd = ns.sd), dim(g.dat))
     datasim <- 2^(datsim)
   } else if (ns.type == 2)  {
-    datsim <- log2(gData) + matrix(rnorm(length(gData), sd = ns.sd), dim(gData))
+    datsim <- log2(g.dat) + matrix(rnorm(length(g.dat), sd = ns.sd), dim(g.dat))
     datasim <- 2^(datsim)
   } else if (ns.type == 3)  {
-    datasim <- gData + matrix(rnorm(length(gData), sd = ns.sd), dim(gData))
+    g.n <- apply(g.dat, 2, sum)
+    g.n.t <- sqrt(g.n) * asin(sqrt(t(g.dat) / g.n))
+    g.n.t <- g.n.t + matrix(rnorm(length(g.dat), sd = ns.sd), dim(g.n.t))
+    datasim <- t(g.n * (sin((g.n.t) / sqrt(g.n)))^2)
   }
   return(datasim)
 }
