@@ -522,7 +522,7 @@ RustFitKsttArc <- function(g.dat, t.dat, lambda = 0.01, n.states = 3, fix.w=FALS
   }
 
     g.n <- apply(g.dat, 2, sum)
-    g.asin.t <- sqrt(g.n) * asin(t(sqrt(t(g.dat) / g.n)))
+    g.asin.t <- sqrt(g.n) * asin(sqrt(t(g.dat) / g.n))
     g.nl <- sd(g.asin.t)
 
   fun <- function(x){
@@ -530,7 +530,7 @@ RustFitKsttArc <- function(g.dat, t.dat, lambda = 0.01, n.states = 3, fix.w=FALS
       wFit <- tmp$w
       betaFit <- tmp$beta
       fit <- RustKstt(wFit, betaFit, t.dat)
-      rss <- ((sqrt(g.n) *  asin(t(sqrt(t(fit$y) / g.n))) - g.asin.t))^2
+      rss <- (t(sqrt(g.n) *  asin(sqrt(t(fit$y) / g.n)) - g.asin.t))^2
       penalty <- lambda * sum(abs(betaFit) / g.nl)
       ss <- c(rss, penalty)
       obj <- sum(ss)
