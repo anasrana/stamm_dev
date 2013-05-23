@@ -92,6 +92,11 @@ AddNoise <- function(sim = NULL, ns.sd, ns.type, g.dat = NULL) {
     g.n.t <- sqrt(g.n) * asin(sqrt(t(g.dat) / g.n))
     g.n.t <- g.n.t + matrix(rnorm(length(g.dat), sd = ns.sd), dim(g.n.t))
     datasim <- t(g.n * (sin((g.n.t) / sqrt(g.n)))^2)
+  } else if (ns.type == 4) {
+      g.n <- apply(g.dat, 2, sum)
+      g.n.t <- t(sqrt(g.n) * asin(sqrt(t(g.dat) / g.n)))
+      g.sim <- g.n.t + matrix(rnorm(length(g.dat), sd = ns.sd), dim(g.n.t))
+      datasim <- list(g.sim = g.sim, g.n = g.n)
   }
   return(datasim)
 }
