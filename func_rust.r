@@ -510,7 +510,7 @@ rust.sampl <- function(g.dat, rSmpl.size, n.randSmpl, rep.gns=NULL){
 ##' @param g.n
 ##' @return
 ##' @author anas ahmad rana
-RustFitKsttArc <- function(g.dat, t.dat, lambda = 0.01, n.states = 3, fix.w=FALSE, w=NULL, g.n = NULL) {
+RustFitKsttArc <- function(g.dat, t.dat, lambda = 0.01, n.states = 3, fix.w=FALSE, w=NULL, g.n = NULL, dat.trans = TRUE) {
   p <- nrow(g.dat)
   if (fix.w) {
     p <- 1
@@ -521,16 +521,22 @@ RustFitKsttArc <- function(g.dat, t.dat, lambda = 0.01, n.states = 3, fix.w=FALS
     wFit <- NULL
   }
 
-    g.n <- apply(g.dat, 2, sum)
-    g.asin.t <- sqrt(g.n) * asin(sqrt(t(g.dat) / g.n))
-    g.nl <- sd(g.asin.t)
-
+  if (dat.trans){
+      g.n <- apply(g.dat, 2, sum)
+      g.asin.t <- sqrt(g.n) * asin(sqrt(t(g.dat) / g.n))
+      g.nl <- sd(g.asin.t)
+  } else {
+      g.asin.t <- t(g.dat)
+      g.n <- g.n
+      g.nl <- sd(g.asin.t)
+  }
   fun <- function(x){
       tmp <- RustPar(x = x, n.states = n.states, p = p, fix.w = fix.w, wFit = wFit)
       wFit <- tmp$w
       betaFit <- tmp$beta
       fit <- RustKstt(wFit, betaFit, t.dat)
       rss <- (t(sqrt(g.n) *  asin(sqrt(t(fit$y) / g.n)) - g.asin.t))^2
+      ## TODO update standardisation of penalty
       penalty <- lambda * sum(abs(betaFit) / g.nl)
       ss <- c(rss, penalty)
       obj <- sum(ss)
