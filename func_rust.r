@@ -496,3 +496,77 @@ rust.sampl <- function(g.dat, rSmpl.size, n.randSmpl, rep.gns=NULL){
 
   return(km.rnd)
 }
+
+
+## ==========================================================================================
+## asinh transformed fitting
+## ==========================================================================================
+
+
+## ****************************************************************************************
+## ----------[ Functions for least squares fitting ]---------------------------------------
+## ****************************************************************************************
+##' Fits data to aggregate Markov Chain model
+##'
+##' .. content for \details{} ..
+##' @title RustFitKstt
+##' @param g.dat gene expression data
+##' @param t.dat time points of data
+##' @param lambda L1 penalty parameter (default = 0.01)
+##' @param n.states number of states in the fitting
+##' @param fit.as Fitting lin, log2Dat, logDat, log2Al (default = 'lin')
+##' @param fix.w Logical variable, fit with fixed "W" matrix only the beta parameter
+##' if true (default FALSE)
+##' @param w pass the W matrix if
+##' @return The function returns fit which is returned from the fitting function.
+##' It returns the fitted $w$ matrix and the $/beta$ matrix. It also returns a  obj vector
+##' that contains the rss, bic and aic scores for the fit.
+##' @author anas ahmad rana
+RustFitKsttTra <- function(g.dat, t.dat, lambda = 0.01, n.states = 3, fix.w=FALSE, w=NULL) {
+  p <- nrow(g.dat)
+  if (fix.w) {
+    p <- 1
+    x0 <- runif (p * n.states)
+    wFit <- w
+  } else if (fix.w == FALSE)  {
+    x0 <- runif ((n.states - 1) + nrow(g.dat) * n.states )
+    wFit <- NULL
+  }
+
+  g.dat.l <- asinh(g.dat)
+  if ( !is.vector(g.dat) )
+    g.nl <- apply(g.dat, 1, sd)
+  else
+    g.nl <- sd(g.dat)
+
+  fun <- function(x){
+      tmp <- RustPar(x = x, n.states = n.states, p = p, fix.w = fix.w, wFit = wFit)
+      wFit <- tmp$w
+      betaFit <- tmp$beta
+      fit <- RustKstt(wFit, betaFit, t.dat)
+      rss <- {asinh(fit$y) - g.dat.l}^2
+      penalty <- lambda * sum(abs(betaFit) / g.nl)
+      ss <- c(rss, penalty)
+      obj <- sum(ss)
+      obj
+    }
+
+  par.scale <- c(rep(1, n.states - 1), rep(apply(g.dat, 1, max), n.states))
+  res <- nlminb(x0, fun, lower = 0, upper = max(g.dat), scale = 1 / par.scale,
+                control=list(iter.max=10000, eval.max=7000, rel.tol=10^-14, sing.tol=10^-14))
+
+  par <- RustPar(g.dat, res$par, n.states, fix.w=fix.w, wFit=w)
+
+  n <- ncol(g.dat)
+  if (fix.w) {
+    rss <- res$objective - lambda * sum(par$beta)
+    obj <- rss
+    names(obj) <- 'rss'
+  } else {
+    rss <- res$objective - lambda * sum(par$beta)
+    obj <- RustBic(rss, n, par$beta)
+
+  }
+
+  return(list(fit = res, w = par$w, beta = par$beta, ms = obj))
+}
