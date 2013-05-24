@@ -46,7 +46,7 @@ RustFitKstt <- function(g.dat, t.dat, lambda = 0.01, n.states = 3, fix.w=FALSE, 
       betaFit <- tmp$beta
       fit <- RustKstt(wFit, betaFit, t.dat)
       rss <- {asinh(fit$y) - g.dat.l}^2
-      penalty <- lambda * sum(abs(betaFit) / g.nl)
+      penalty <- lambda * sum(betaFit / g.nl)
       ss <- c(rss, penalty)
       obj <- sum(ss)
       obj
