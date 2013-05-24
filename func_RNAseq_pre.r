@@ -4,7 +4,7 @@ library('edgeR')
 
 LoadMcf10aDat <- function(f.name = NULL, dat.col, col.order) {
   if (is.null(f.name)) {
-    f.name  <- "/Users/anas/Dropbox/complexity/phd/data/Sandra2012/gene_exp.txt"
+    f.name  <- "~/phd/data/Sandra2012/gene_exp.txt"
     dat.col  <- 2:21
     dat.order <- c(2, 12, 13:20, 1, 3:7)
     dat.null  <-  8:11
