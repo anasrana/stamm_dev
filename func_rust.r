@@ -51,8 +51,11 @@ RustFitKstt <- function(g.dat, t.dat, lambda = 0.01, n.states = 3, fix.w=FALSE, 
       obj <- sum(ss)
       obj
     }
-
-  par.scale <- c(rep(1, n.states - 1), rep(apply(g.dat, 1, max), n.states))
+  if (is.vector(g.dat)) {
+      par.scale <- c(rep(1, n.states - 1), rep(max(g.dat), n.states))
+  } else {
+      par.scale <- c(rep(1, n.states - 1), rep(apply(g.dat, 1, max), n.states))
+  }
   res <- nlminb(x0, fun, lower = 0, upper = max(g.dat), scale = 1 / par.scale,
                 control=list(iter.max=10000, eval.max=7000, rel.tol=10^-14, sing.tol=10^-14))
 
