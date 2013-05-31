@@ -320,53 +320,46 @@ RustCluster <- function(g.dat, n.cl) {
 ## ******************************************************************************************
 ## ******************************************************************************************
 
-##' Function to fit w for centroids
+##' Cluster (kmeans) and fit under timepoint deletions
 ##'
 ##' .. content for \details{} ..
 ##' @title
 ##' @param g.dat
 ##' @param t.dat
-##' @param lambda
-##' @param n.states
-##' @param fit.as
-##' @param rSmpls
-##' @param fit.pll
-##' @param n.smpl
-##' @param reps
+##' @param m.cl
+##' @param t.ko
+##' @param k.stt
 ##' @return
 ##' @author anas ahmad rana
-rust.clst.fit <- function(g.dat, t.dat, lambda, n.states, fit.as='log2Dat', rSmpls,
-                          fit.pll=FALSE, n.smpl=10,reps=2){
+ParClusterCV <- function(g.dat, t.dat=NULL, m.cl=seq(5, 20, 2), t.ko=2:ncol(g.dat), k.stt=4) {
+    ## some parameters determined from the input
+    n.genes <- nrow(g.dat)
+    g.norm <- g.dat / apply(g.dat, 1, sd)
+    vec.mt <- cbind(rep(1:length(m.cl), length(t.ko)), rep(t.ko, each=length(m.cl)))
 
-  ## Cluster gene trajectories
-  cl <- rust.clustering(g.dat, km.k=6)
-  rnd.sample <- rust.sampl(g.dat, rSmpl.size=rSmpls, n.randSmpl=10)
+    fit <- mclapply(1:nrow(vec.mt), function(x){
+        t.dl <- vec.mt[x, 2]
+        ## Clustered after time point deletion using k-means
+        g.km <- kmeans(g.norm[, -t.dl], vec.mt[x, 1], iter.max=100, nstart=20)
+        g.ct <- g.km$centers
+        ## fit cluster centroids with fixed states k
+        fit.m <- RustFitKstt(g.ct, t.dat[-t.dl], lambda=0, n.states=k.stt)
+        ## Fix w and fit all genes used in clustering
+        w <- fit.m$w
+        beta <- matrix(0, n.genes, k.stt)
+        rownames(beta) <- rownames(g.dat[1:n.genes, ])
+        for (i.j in 1:n.genes) {
+            fit.tmp <- RustFitKstt(g.dat[i.j, -t.dl], t.dat[-t.dl], lambda=0,
+                                   n.states=k.stt, fix.w=TRUE, w=w)
+            beta[i.j, ] <- fit.tmp$beta
+        }
+        return(list(cl=g.km, cl.fit=fit.m, w=w, beta=beta))
+    }, mc.preschedule = TRUE)
 
-  if (length(n.states)==1) {
-
-    ## Fit the cluster centroids to fix w
-    ct.fit <- rust.centroid.fit(dat.cntrd=cl$clst$centers, t.dat=t.dat, lambda,
-                                n.stt=n.states, fit.as, rSmpls, rand.sample=rnd.sample,
-                                reps=reps, n.smpl=n.smpl, fit.pll=fit.pll, g.dat=g.dat)
-
-    ms.stts <- list(rss=ct.fit$rss, bic=ct.fit$bic, aic=ct.fit$aic)
-  } else if (length(n.states)>1)  {
-    ## Fit the cluster centroids to fix w
-    ms.stts <- vector('list', length(n.states))
-    names(ms.stts) <- paste('stt',n.states, sep='')
-    for (i.s in 1:length(n.states)) {
-      n.stt <- n.states[i.s]
-      ms.rss <-  10^10
-
-      ct.fit <- rust.centroid.fit(dat.cntrd=cl$clst$centers, t.dat=t.dat, lambda, n.stt,
-                                  fit.as, reps=reps)
-      ms.stts[[i.s]] <- list(rss=ct.fit$rss, bic=ct.fit$bic, aic=ct.fit$aic)
-    }
-  }
-
-  return(list(ms.cl=ms.stts, states=n.states, sample.N=rSmpls))
+    names(fit) <- paste('m', vec.mt[, 1], 'td', vec.mt[, 2], sep='.')
+    ## output from the function
+    return(list(g.norm=g.norm, fit=fit))
 }
-
 
 ##' .. content for \description{} (no empty lines) ..
 ##'
