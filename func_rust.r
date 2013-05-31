@@ -315,11 +315,6 @@ RustCluster <- function(g.dat, n.cl) {
 }
 
 
-## ******************************************************************************************
-## FUNCTIONS TO BE REWRITTEN
-## ******************************************************************************************
-## ******************************************************************************************
-
 ##' Cluster (kmeans) and fit under timepoint deletions
 ##'
 ##' .. content for \details{} ..
@@ -361,65 +356,10 @@ ParClusterCV <- function(g.dat, t.dat=NULL, m.cl=seq(5, 20, 2), t.ko=2:ncol(g.da
     return(list(g.norm=g.norm, fit=fit))
 }
 
-##' .. content for \description{} (no empty lines) ..
-##'
-##' .. content for \details{} ..
-##' @title
-##' @param dat.cntrd
-##' @param t.dat
-##' @param lambda
-##' @param n.stt
-##' @param fit.as
-##' @param rand.sample
-##' @param g.dat
-##' @param reps
-##' @param n.smpl
-##' @param fit.pll
-##' @return
-##' @author anas ahmad rana
-rust.centroid.fit <- function(dat.cntrd, t.dat, lambda, n.stt, fit.as, rSmpls, rand.sample,
-                              g.dat, reps, n.smpl, fit.pll){
-  ms.rss <-  10^10
-  for (is in 1:reps) {
-    tmp.fit <- RustFitKstt(g.dat=dat.cntrd, t.dat=t.dat, lambda=lambda, n.states=n.stt, fit.as=fit.as)
-    if (tmp.fit$ms[1]<ms.rss) {
-      cl.fit <- tmp.fit
-      ms.rss <- tmp.fit$ms[1]
-    }
-  }
-  ms <- cl.fit$ms
-  beta.centroid <- cl.fit$beta
-  w <- cl.fit$w
-
-  cat('\ntransition_rates_fit= \n')
-  if (n.stt>2 )
-    print(diag(w[-1,]))
-  else
-    print(w)
-  cat('\nrss = \n')
-  print(ms[1])
-  cat('\n now fitting genes \n')
-
-  aic <- matrix(0,length( rand.sample), n.smpl)
-  bic <- matrix(0,length( rand.sample), n.smpl)
-  rss <- matrix(0,length( rand.sample), n.smpl)
-
-  for (i in 1:length(rand.sample)) {
-    smpl <- rand.sample[[i]]
-    for (j in 1:ncol(smpl)) {
-      gVec <- smpl[,j]
-      fit.v <- rust.fit.gnlst(gVec, g.dat=g.dat, t.dat=t.dat, lambda, n.states=n.stt, fit.as, w, fit.pll=fit.pll)
-      rss[i,j] <- fit.v$ms[1]
-      bic[i,j] <- fit.v$ms[2]
-      aic[i,j] <- fit.v$ms[3]
-    }
-  }
-  rownames(rss) <- paste('samples',rSmpls,sep='')
-  rownames(bic) <- paste('samples',rSmpls,sep='')
-  rownames(aic) <- paste('samples',rSmpls,sep='')
-  return(list(rss=rss, bic=bic, aic=aic, w=w))
-}
-
+## ******************************************************************************************
+## FUNCTIONS TO BE REWRITTEN
+## ******************************************************************************************
+## ******************************************************************************************
 
 
 ##' Fits betas for a list of genes given w
@@ -464,30 +404,4 @@ RustFitGnlst <- function(gName, g.dat, t.dat, lambda, n.states, w, fit.pll=FALSE
   ms <- RustBic(rss, n, betas)
 
   return(list(beta=betas, rss.v=rss.v, w=w, ms=ms))
-}
-
-
-
-##' .. content for \description{} (no empty lines) ..
-##'
-##' .. content for \details{} ..
-##' @title
-##' @param g.dat
-##' @param rSmpl.size
-##' @return
-##' @author anas ahmad rana
-rust.sampl <- function(g.dat, rSmpl.size, n.randSmpl, rep.gns=NULL){
-  km.rnd <- NULL
-  if (!is.null(rep.gns)) {
-    for (iR in 1:length(rSmpl.size)) {
-      km.rnd <- c(km.rnd, list(replicate(n.randSmpl, sample(x=rownames(g.dat[!rownames(g.dat) %in% rep.gns,])
-                                                            ,size=rSmpl.size[iR]))))
-    }
-  } else {
-   for (iR in 1:length(rSmpl.size)) {
-     km.rnd <- c(km.rnd, list(replicate(n.randSmpl, sample(x=rownames(g.dat),size=rSmpl.size[iR]))))
-   }
-  }
-
-  return(km.rnd)
 }
