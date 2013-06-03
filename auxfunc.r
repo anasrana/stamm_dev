@@ -336,44 +336,86 @@ PlotWmatConvClust <- function(w.cl, tau, plot.as=FALSE, title.g=''){
 ##   ********************************************************************************
 
 
-RustCvRss <- function(fit.file, n.stt=4, n.gn=12, t.ko=1, sim.file){
+RustCvRss <- function(fit.file, t.ko=NULL, k.states=NULL){
+    load(fit.file)
+    vec.mt <- cbind(rep(1:length(m.cl), length(t.ko)), rep(t.ko, each=length(m.cl)))
+    names(fit) <- paste('m', vec.mt[, 1], 'td', vec.mt[, 2], sep='.')
+    t.dat <- as.numeric(gsub("hr", "", colnames(g.norm)))
 
-  load(fit.file)
-  load(sim.file)
-  if (!exists('sim.dat'))
-    sim.dat <- list(sim = sim, beta = sim$beta, tau = sim$tau)
-
-  beta.f <- matrix(NA, n.stt*n.gn, length(fit))
-  for (i in 1:length(fit)) {
-    beta.f[,i] <- as.vector(fit[[i]][[t.ko]]$beta)
-  }
-
-  w.f <- matrix(NA, n.stt*n.gn, length(fit))
-  for (i in 1:length(fit)) {
-    w.f[,i] <- as.vector(fit[[i]][[t.ko]]$w)
-  }
-
-
-  w.sim <- matrix(0, n.stt, n.stt)
-  diag(w.sim[-1,]) <- 1/sim.dat$sim$tau
-
-
-  beta <- matrix(NA, length(fit), length(t.dat)-1)
-  w <- matrix(NA, length(fit), length(t.dat)-1)
-  rss.mat <- matrix(NA, length(fit), length(t.dat)-1)
-  for ( i.l in 1:length(fit) ) {
-    for ( i.t in 2:length(t.dat) ) {
-      beta[i.l, i.t-1] <- sum(((fit[[i.l]][[i.t]]$beta - sim.dat$beta))^2)
-      w[i.l, i.t-1] <- sum((fit[[i.l]][[i.t]]$w - w.sim)^2)
-      bt <- fit[[i.l]][[i.t]]$beta
-      w.fit <- fit[[i.l]][[i.t]]$w
-      rep.fit <- RustKstt(w.fit, bt,  t.dat)
-      rss.mat[i.l, i.t-1] <- sum((log2(g.dat[,i.t] + 1) - log2(rep.fit$y[,i.t] +1) )^2 )
+    rss.v <- rep(NA, nrow(vec.mt))
+    rss.m <- matrix(0, length(t.ko), length(m.cl))
+    for (i.v in 1:nrow(vec.mt)) {
+        par.tmp <- fit[[i.v]]
+        a.fit <- RustKstt(par.tmp$w, par.tmp$beta, t.dat)
+        tmp <- vec.mt[i.v, ]
+        rss.v[i.v] <- sum((asinh(a.fit$y[, 2]) - asinh(g.dat[, 2]))^2)
+        rss.m[tmp[2] - 1, tmp[1]] <- sum((asinh(a.fit$y[, 2]) - asinh(g.dat[, 2]))^2)
     }
-  }
 
-  return(list(rss = rss.mat, beta = beta, w = w, sim.dat=sim.dat, fit.dat = fit,
-              lambda = lmbd.mat[,1], beta.fit=beta.f, w.fit = w.f ))
+    rss.df <- data.frame(rss=rss.v, m=m.cl[vec.mt[, 1]], t.d=vec.mt[, 2])
+
+    plot.rss.m <- ggplot(dat=rss.df, aes(x=m, y=rss))+
+        geom_line(size=1.2) +
+            geom_point(size=3) +
+                xlab('No. of clusters, m') +
+                    ylab('RSS') +
+                        facet_wrap( ~ t.d) +
+                            theme_bw() +
+                            theme(legend.key = element_blank(),
+                                  legend.key.width = unit(0.8, 'cm'),
+                                  legend.title = element_blank(),
+                                  legend.text = element_text(size = 14),
+                                  axis.title.x = element_text(face='bold', size=20),
+                                  axis.title.y = element_text(face='bold', size=20),
+                                  axis.text.x = element_text(size=12),
+                                  axis.text.y = element_text(size=12),
+                                  strip.text.x = element_text(size=10),
+                                  strip.background = element_rect(colour = NA),
+                                  plot.title = element_text(face='bold'))
+
+
+    plot.rss.t <- ggplot(dat=rss.df, aes(x=t.d, y=rss))+
+        geom_line(size=1.2) +
+            geom_point(size=3) +
+                xlab('time point deletion') +
+                    ylab('RSS') +
+                        facet_wrap( ~ m) +
+                            theme_bw() +
+                            theme(legend.key = element_blank(),
+                                  legend.key.width = unit(0.8, 'cm'),
+                                  legend.title = element_blank(),
+                                  legend.text = element_text(size = 14),
+                                  axis.title.x = element_text(face='bold', size=20),
+                                  axis.title.y = element_text(face='bold', size=20),
+                                  axis.text.x = element_text(size=12),
+                                  axis.text.y = element_text(size=12),
+                                  strip.text.x = element_text(size=10),
+                                  strip.background = element_rect(colour = NA),
+                                  plot.title = element_text(face='bold'))
+
+
+    rss.df <- data.frame(rss=apply(rss.m, 2, sum), m = m.cl)
+
+    plot.rss.cv <- ggplot(dat=rss.df, aes(x=m, y=rss)) +
+        geom_line(size=1.7) +
+            geom_point(size=4) +
+                xlab('No. of clusters, m') +
+                    ylab('RSS') +
+                        theme_bw() +
+                            theme(legend.key = element_blank(),
+                                  legend.key.width = unit(0.8, 'cm'),
+                                  legend.title = element_blank(),
+                                  legend.text = element_text(size = 14),
+                                  axis.title.x = element_text(face='bold', size=20),
+                                  axis.title.y = element_text(face='bold', size=20),
+                                  axis.text.x = element_text(size=12),
+                                  axis.text.y = element_text(size=12),
+                                  strip.text.x = element_text(size=10),
+                                  strip.background = element_rect(colour = NA),
+                                  plot.title = element_text(face='bold'))
+
+return(list(rss = rss.m, rss.v=rss.v, plot.rss.cv=plot.rss.cv, plot.rss.t=plot.rss.t,
+            plot.rss.m=plot.rss.m))
 }
 
 RustCvRssGridClst <- function(fit.file, n.stt=4, n.gn=120, t.ko=29, sim.file, m.cl) {
