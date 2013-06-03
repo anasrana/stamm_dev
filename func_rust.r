@@ -356,16 +356,26 @@ ParClusterCV <- function(g.dat, t.dat=NULL, m.cl=seq(5, 20, 2), t.ko=2:ncol(g.da
     return(list(g.norm=g.norm, fit=fit))
 }
 
-FitClGns <- function(g.dat, t.dat, l.pen=0, k.stt, m, PLL=FALSE) {
-    ## Normalise data to be univariate and fit clusters
-    g.norm <- g.dat / apply(g.dat, 1, sd)
-    g.km <- kmeans(g.norm, m, iter.max=100, nstart=100)
-    g.ct <- g.km$centers
-    ## fit cluster centroids with fixed states k
-    fit.m <- RustFitKstt(g.ct, t.dat, lambda=0, n.states=k.stt)
-    w <- fit.m$w
-    ## Fit all genes in g.dat with w from clustering
-    fit.g <- RustFitGns(g.dat=g.dat, t.dat=t.dat, lambda=l.pen, n.states=k.stt, w=w, PLL=PLL)
+FitClGns <- function(g.dat, t.dat, l.pen=0, k.stt, m, PLL=FALSE, w=NULL) {
+    if (is.null(w)) {
+        ## Normalise data to be univariate and fit clusters
+        g.norm <- g.dat / apply(g.dat, 1, sd)
+        g.km <- kmeans(g.norm, m, iter.max=100, nstart=100)
+        g.ct <- g.km$centers
+        ## fit cluster centroids with fixed states k
+        fit.m <- RustFitKstt(g.ct, t.dat, lambda=0, n.states=k.stt)
+        w <- fit.m$w
+    }
+    ## Fit all genes in g.dat with w from clustering and single penalty
+    if (is.numeric(l.pen)) {
+        fit.g <- RustFitGns(g.dat=g.dat, t.dat=t.dat, lambda=l.pen, n.states=k.stt, w=w, PLL=PLL)
+    } else if (is.vector(l.pen)) {
+        fit.g <- vector('list', length(l.pen))
+        for (i.l in 1:length(l.pen)) {
+            fit.g[[i.l]] <- RustFitGns(g.dat=g.dat, t.dat=t.dat, lambda=l.pen[i.l],
+                                       n.states=k.stt, w=w, PLL=PLL)
+        }
+    }
     return(list(fit.g=fit.g, fit.m=fit.m, cl.km=g.km))
 }
 
