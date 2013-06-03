@@ -63,11 +63,11 @@ RustFitKstt <- function(g.dat, t.dat, lambda = 0.01, n.states = 3, fix.w=FALSE, 
 
     n <- ncol(g.dat)
     if (fix.w) {
-        rss <- res$objective - lambda * sum(par$beta)
+        rss <- res$objective - lambda * sum(par$beta / g.nl)
         obj <- rss
         names(obj) <- 'rss'
     } else {
-        rss <- res$objective - lambda * sum(par$beta)
+        rss <- res$objective - lambda * sum(par$beta / g.nl)
         obj <- RustBic(rss, n, par$beta)
     }
 
@@ -356,7 +356,7 @@ ParClusterCV <- function(g.dat, t.dat=NULL, m.cl=seq(5, 20, 2), t.ko=2:ncol(g.da
     return(list(g.norm=g.norm, fit=fit))
 }
 
-FitClGns <- function(g.dat, t.dat, l.pen=0, k.stt, m, PLL=FALSE, w=NULL) {
+FitClGns <- function(g.dat, t.dat, l.pen=0, k.stt, m, pll=FALSE, w=NULL) {
     if (is.null(w)) {
         ## Normalise data to be univariate and fit clusters
         g.norm <- g.dat / apply(g.dat, 1, sd)
@@ -368,12 +368,12 @@ FitClGns <- function(g.dat, t.dat, l.pen=0, k.stt, m, PLL=FALSE, w=NULL) {
     }
     ## Fit all genes in g.dat with w from clustering and single penalty
     if (is.numeric(l.pen)) {
-        fit.g <- RustFitGns(g.dat=g.dat, t.dat=t.dat, lambda=l.pen, n.states=k.stt, w=w, PLL=PLL)
+        fit.g <- RustFitGns(g.dat=g.dat, t.dat=t.dat, lambda=l.pen, n.states=k.stt, w=w, pll=pll)
     } else if (is.vector(l.pen)) {
         fit.g <- vector('list', length(l.pen))
         for (i.l in 1:length(l.pen)) {
             fit.g[[i.l]] <- RustFitGns(g.dat=g.dat, t.dat=t.dat, lambda=l.pen[i.l],
-                                       n.states=k.stt, w=w, PLL=PLL)
+                                       n.states=k.stt, w=w, pll=pll)
         }
     }
     return(list(fit.g=fit.g, fit.m=fit.m, cl.km=g.km))
@@ -389,17 +389,17 @@ FitClGns <- function(g.dat, t.dat, l.pen=0, k.stt, m, PLL=FALSE, w=NULL) {
 ##' @param lambda L1 penalty parameter
 ##' @param n.states number of states to be fitted
 ##' @param w transition matrix
-##' @param PLL logical run in parallel if set to true
+##' @param pll logical run in parallel if set to true
 ##' @return
 ##' @author anas ahmad rana
-RustFitGns <- function(g.names=NULL, g.dat, t.dat, lambda=0, n.states, w, PLL=FALSE){
+RustFitGns <- function(g.names=NULL, g.dat, t.dat, lambda=0, n.states, w, pll=FALSE){
     if (!is.null(g.names)) {
         g.name.idx <- which(rownames(g.dat)==g.names)
     } else {
         g.name.idx <- 1:nrow(g.dat)
     }
 
-    if (PLL) {
+    if (pll) {
         fit.g <- mclapply(g.name.idx, function(x)
                           cl.fit = RustFitKstt(g.dat=g.dat[x, ], t.dat=t.dat, lambda=lambda,
                               n.states=n.states, w=w, fix.w=TRUE)
