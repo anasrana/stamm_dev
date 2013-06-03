@@ -369,7 +369,7 @@ ParClusterCV <- function(g.dat, t.dat=NULL, m.cl=seq(5, 20, 2), t.ko=2:ncol(g.da
 ##' @param PLL logical run in parallel if set to true
 ##' @return
 ##' @author anas ahmad rana
-RustFitGnlst <- function(g.names=NULL, g.dat, t.dat, lambda, n.states, w, PLL=FALSE){
+RustFitGns <- function(g.names=NULL, g.dat, t.dat, lambda=0, n.states, w, PLL=FALSE){
     if (!is.null(g.names)) {
         g.name.idx <- which(rownames(g.dat)==g.names)
     } else {
@@ -379,7 +379,8 @@ RustFitGnlst <- function(g.names=NULL, g.dat, t.dat, lambda, n.states, w, PLL=FA
     if (PLL) {
         fit.g <- mclapply(g.name.idx, function(x)
                           cl.fit = RustFitKstt(g.dat=g.dat[x, ], t.dat=t.dat, lambda=lambda,
-                              n.states=n.states, w=w, fix.w=TRUE))
+                              n.states=n.states, w=w, fix.w=TRUE)
+                          )
     } else {
         fit.g <- lapply(g.name.idx, function(x)
                         cl.fit = RustFitKstt(g.dat=g.dat[x, ], t.dat=t.dat, lambda=lambda,
