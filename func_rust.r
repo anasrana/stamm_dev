@@ -367,16 +367,19 @@ FitClGns <- function(g.dat, t.dat, l.pen=0, k.stt, m, pll=FALSE, w=NULL) {
         w <- fit.m$w
     }
     ## Fit all genes in g.dat with w from clustering and single penalty
-    if (is.numeric(l.pen)) {
+    if (length(l.pen)==1) {
         fit.g <- RustFitGns(g.dat=g.dat, t.dat=t.dat, lambda=l.pen, n.states=k.stt, w=w, pll=pll)
+        bic <- fit.g$ms[2]
     } else if (is.vector(l.pen)) {
         fit.g <- vector('list', length(l.pen))
+        bic <- rep(NA, length(l.pen))
         for (i.l in 1:length(l.pen)) {
             fit.g[[i.l]] <- RustFitGns(g.dat=g.dat, t.dat=t.dat, lambda=l.pen[i.l],
                                        n.states=k.stt, w=w, pll=pll)
+            bic[i.l] <- fit.g[[i.l]]$ms[2]
         }
     }
-    return(list(fit.g=fit.g, fit.m=fit.m, cl.km=g.km))
+    return(list(bic=bic, fit.g=fit.g, fit.m=fit.m, cl.km=g.km))
 }
 
 ##' Fits betas for a list of genes
