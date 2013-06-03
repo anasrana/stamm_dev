@@ -356,6 +356,25 @@ ParClusterCV <- function(g.dat, t.dat=NULL, m.cl=seq(5, 20, 2), t.ko=2:ncol(g.da
     return(list(g.norm=g.norm, fit=fit))
 }
 
+RustChsKL <- function (g.dat, t.dat, m, k.vec=2:5, pen.vec=seq(0, 0.2, 0.05), pll=TRUE, w=NULL) {
+    n.k <- length(k.vec)
+    fit.k <- vector('list', n.k)
+    beta <-  vector('list', n.k)
+    w <- vector('list', n.k)
+    bic <- rep(NA, n.k)
+    l.min <- rep(NA, n.k)
+    for (i.k in 1:n.k) {
+        fit.tmp <- FitClGns(g.dat, t.dat, m=m, l.pen=pen.vec, k.stt=k.vec[i.k], pll=pll)
+        fit.k[[i.k]] <- list(fit=fit.tmp$fit.g[[which(fit.tmp$bic == min(fit.tmp$bic))]],
+                             bic=fit.tmp$bic)
+        beta[[i.k]] <- fit.k[[i.k]]$fit$beta
+        w[[i.k]] <- fit.k[[i.k]]$fit$w
+        bic[[i.k]] <- min(fit.tmp$bic)
+        l.min[i.k] <- pen.vec[which(fit.tmp$bic == min(fit.tmp$bic))]
+    }
+    return(list(k.fit=fit.k, beta=beta, w=w, bic=bic, l.min=l.min))
+}
+
 FitClGns <- function(g.dat, t.dat, l.pen=0, k.stt, m, pll=FALSE, w=NULL) {
     if (is.null(w)) {
         ## Normalise data to be univariate and fit clusters
