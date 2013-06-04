@@ -367,7 +367,7 @@ RustChsKL <- function (g.dat, t.dat, m, k.vec=2:5, pen.vec=seq(0, 0.2, 0.05), pl
     for (i.k in 1:n.k) {
         fit.tmp <- FitClGns(g.dat, t.dat, m=m, l.pen=pen.vec, k.stt=k.vec[i.k], pll=pll)
         fit.k[[i.k]] <- list(fit=fit.tmp$fit.g[[which(fit.tmp$bic == min(fit.tmp$bic))]],
-                             bic=fit.tmp$bic)
+                             bic=fit.tmp$bic, all.fit=fit.tmp)
         beta[[i.k]] <- fit.k[[i.k]]$fit$beta
         w[[i.k]] <- fit.k[[i.k]]$fit$w
         bic[[i.k]] <- min(fit.tmp$bic)
