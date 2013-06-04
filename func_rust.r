@@ -87,8 +87,9 @@ RustBic <- function(rss, n, beta, b.thresh = 10^-4) {
     Df <- sum(beta > b.thresh)
     bicSc <- n * log(rss / (n - 1)) + log(n) * Df
     aicSc <- n * log(rss / (n - 1)) + 2 * Df
-    ms <- c(rss, bicSc, aicSc)
-    names(ms) <- c('rss', 'bic', 'aic')
+    aicScc <- aicSc + (2 * Df * (Df + 1)) / (n - Df - 1)
+    ms <- c(rss, bicSc, aicSc, aicScc)
+    names(ms) <- c('rss', 'bic', 'aic', 'aicc')
     return(ms)
 }
 
