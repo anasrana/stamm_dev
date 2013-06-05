@@ -327,7 +327,8 @@ RustCluster <- function(g.dat, n.cl) {
 ##' @param k.stt
 ##' @return
 ##' @author anas ahmad rana
-ParClusterCV <- function(g.dat, t.dat=NULL, m.cl=seq(5, 20, 2), t.ko=2:ncol(g.dat), k.stt=4) {
+ParClusterCV <- function(g.dat, t.dat=NULL, m.cl=seq(5, 20, 2), t.ko=2:ncol(g.dat),
+                         k.stt=4, l.pen=0) {
     ## some parameters determined from the input
     n.genes <- nrow(g.dat)
     g.norm <- g.dat / apply(g.dat, 1, sd)
@@ -345,7 +346,7 @@ ParClusterCV <- function(g.dat, t.dat=NULL, m.cl=seq(5, 20, 2), t.ko=2:ncol(g.da
         beta <- matrix(0, n.genes, k.stt)
         rownames(beta) <- rownames(g.dat[1:n.genes, ])
         for (i.j in 1:n.genes) {
-            fit.tmp <- RustFitKstt(g.dat[i.j, -t.dl], t.dat[-t.dl], lambda=0,
+            fit.tmp <- RustFitKstt(g.dat[i.j, -t.dl], t.dat[-t.dl], lambda=l.pen,
                                    n.states=k.stt, fix.w=TRUE, w=w)
             beta[i.j, ] <- fit.tmp$beta
         }
