@@ -191,14 +191,15 @@ RustKstt <- function(wFit=NULL, betaFit, t){
 ##' @param n.core
 ##' @return
 ##' @author anas ahmad rana
-RustCrossValClust.p <- function(g.dat, t.dat, stt.v, n.cl = c(2, seq(5, 30, 5)), n.core = 20) {
+RustCrossValClust.p <- function(g.dat, t.dat=ncol(g.dat), stt.v=1:5, m.cl = seq(4, 20, 2),
+                                n.core = 20) {
     ## cluster genes
-    cl.dat <- RustCluster(g.dat, n.cl = n.cl)
+    cl.dat <- RustCluster(g.dat, m.cl = m.cl)
     g.cen <- cl.dat[['cent.dat']]
     ## define matrix for parameters in mclapply
-    cs.mat <- cbind(rep(stt.v, length(n.cl)), rep(n.cl, length(stt.v)))
+    vec.mt <- cbind(rep(1:length(m.cl), length(t.ko)), rep(t.ko, each=length(m.cl)))
     ## start mcl apply for all time-p knockout
-    n.ml <- length(stt.v) * length(n.cl)
+    n.ml <- length(stt.v) * length(m.cl)
     fit.k.m <- mclapply(1:n.ml, function(x) {
         x.name <- paste('m.', cs.mat[x, 2], sep='')
         i.v <- 1
@@ -240,7 +241,7 @@ RustCrossValClust.p <- function(g.dat, t.dat, stt.v, n.cl = c(2, seq(5, 30, 5)),
 ##' @param g.dat
 ##' @param t.dat
 ##' @param g.cent
-##' @param n.cl
+##' @param m.cl
 ##' @param n.core
 ##' @param pen
 ##' @param n.stt
@@ -288,7 +289,7 @@ RustFitCentroid.p <- function(g.dat, t.dat, g.cent = NULL, n.cl = c(2, seq(5, 30
 RustCluster <- function(g.dat, n.cl) {
     ## Scale input data to unit variance
     g.sd <- apply(g.dat, 1, sd)
-    g.norm <- (g.dat)/g.sd
+    g.norm <- (g.dat) / g.sd
     ## initialise empty lists
     g.cl <- vector('list', length(n.cl))
     g.cent <- vector('list', length(n.cl))
@@ -296,7 +297,7 @@ RustCluster <- function(g.dat, n.cl) {
     ## perform a k-means clustering
     for (i.n in 1:length(n.cl)) {
         i.m  <- n.cl[i.n]
-        g.kn.cl <- kmeans(g.norm,i.m, iter.max=100, nstart=100)
+        g.kn.cl <- kmeans(g.norm, i.m, iter.max=100, nstart=100)
         g.cl[[i.n]] <- g.kn.cl
         g.cent[[i.n]] <- g.kn.cl$centers
         g.rep.names <- rep(NA, i.m)
