@@ -344,21 +344,21 @@ RustCvRss <- function(fit.file, t.ko=NULL, k.states=NULL){
 
     rss.v <- rep(NA, nrow(vec.mt))
     rss.m <- matrix(0, length(t.ko), length(m.cl))
+    g.sd <- apply(asinh(g.dat), 1, sd)
     for (i.v in 1:nrow(vec.mt)) {
         par.tmp <- fit[[i.v]]
         a.fit <- RustKstt(par.tmp$w, par.tmp$beta, t.dat)
         tmp <- vec.mt[i.v, ]
-        rss.v[i.v] <- sum((asinh(a.fit$y[, 2]) - asinh(g.dat[, 2]))^2)
-        rss.m[tmp[2] - 1, tmp[1]] <- sum((asinh(a.fit$y[, 2]) - asinh(g.dat[, 2]))^2)
+        rss.v[i.v] <- mean((asinh(a.fit$y[, tmp[2]]) - asinh(g.dat[, tmp[2]]))^2)
+        rss.m[tmp[2] - 1, tmp[1]] <- mean(((asinh(a.fit$y[, 2]) - asinh(g.dat[, 2])) / g.sd)^2)
     }
 
     rss.df <- data.frame(rss=rss.v, m=m.cl[vec.mt[, 1]], t.d=vec.mt[, 2])
-
     plot.rss.m <- ggplot(dat=rss.df, aes(x=m, y=rss))+
         geom_line(size=1.2) +
             geom_point(size=3) +
-                xlab('No. of clusters, m') +
-                    ylab('RSS') +
+                xlab(expression('No. of clusters, m')) +
+                    ylab('MSE') +
                         facet_wrap( ~ t.d) +
                             theme_bw() +
                                 theme(legend.key = element_blank(),
@@ -367,18 +367,16 @@ RustCvRss <- function(fit.file, t.ko=NULL, k.states=NULL){
                                       legend.text = element_text(size = 14),
                                       axis.title.x = element_text(face='bold', size=20),
                                       axis.title.y = element_text(face='bold', size=20),
-                                      axis.text.x = element_text(size=12),
-                                      axis.text.y = element_text(size=12),
+                                      axis.text.x = element_text(size=16),
+                                      axis.text.y = element_text(size=16),
                                       strip.text.x = element_text(size=10),
                                       strip.background = element_rect(colour = NA),
                                       plot.title = element_text(face='bold'))
-
-
     plot.rss.t <- ggplot(dat=rss.df, aes(x=t.d, y=rss))+
         geom_line(size=1.2) +
             geom_point(size=3) +
                 xlab('time point deletion') +
-                    ylab('RSS') +
+                    ylab('MSE') +
                         facet_wrap( ~ m) +
                             theme_bw() +
                                 theme(legend.key = element_blank(),
@@ -387,20 +385,17 @@ RustCvRss <- function(fit.file, t.ko=NULL, k.states=NULL){
                                       legend.text = element_text(size = 14),
                                       axis.title.x = element_text(face='bold', size=20),
                                       axis.title.y = element_text(face='bold', size=20),
-                                      axis.text.x = element_text(size=12),
-                                      axis.text.y = element_text(size=12),
+                                      axis.text.x = element_text(size=16),
+                                      axis.text.y = element_text(size=16),
                                       strip.text.x = element_text(size=10),
                                       strip.background = element_rect(colour = NA),
                                       plot.title = element_text(face='bold'))
-
-
-    rss.df <- data.frame(rss=apply(rss.m, 2, sum), m = m.cl)
-
+    rss.df <- data.frame(rss=apply(sqrt(rss.m), 2, mean), m = m.cl)
     plot.rss.cv <- ggplot(dat=rss.df, aes(x=m, y=rss)) +
         geom_line(size=1.7) +
             geom_point(size=4) +
-                xlab('No. of clusters, m') +
-                    ylab('RSS') +
+                xlab(expression('No. of clusters, m')) +
+                    ylab('MSE') +
                         theme_bw() +
                             theme(legend.key = element_blank(),
                                   legend.key.width = unit(0.8, 'cm'),
@@ -408,8 +403,8 @@ RustCvRss <- function(fit.file, t.ko=NULL, k.states=NULL){
                                   legend.text = element_text(size = 14),
                                   axis.title.x = element_text(face='bold', size=20),
                                   axis.title.y = element_text(face='bold', size=20),
-                                  axis.text.x = element_text(size=12),
-                                  axis.text.y = element_text(size=12),
+                                  axis.text.x = element_text(size=16),
+                                  axis.text.y = element_text(size=16),
                                   strip.text.x = element_text(size=10),
                                   strip.background = element_rect(colour = NA),
                                   plot.title = element_text(face='bold'))
