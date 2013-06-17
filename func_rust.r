@@ -286,31 +286,31 @@ RustFitCentroid.p <- function(g.dat, t.dat, g.cent = NULL, n.cl = c(2, seq(5, 30
 ##' @param n.cl vector of arbitrary length
 ##' @return
 ##' @author anas ahmad rana
-RustCluster <- function(g.dat, n.cl) {
+RustCluster <- function(g.dat, m.cl) {
     ## Scale input data to unit variance
     g.sd <- apply(g.dat, 1, sd)
     g.norm <- (g.dat) / g.sd
     ## initialise empty lists
-    g.cl <- vector('list', length(n.cl))
-    g.cent <- vector('list', length(n.cl))
-    g.cl.names <- vector('list', length(n.cl))
+    g.cl <- vector('list', length(m.cl))
+    g.cent <- vector('list', length(m.cl))
+    g.cl.names <- vector('list', length(m.cl))
     ## perform a k-means clustering
-    for (i.n in 1:length(n.cl)) {
-        i.m  <- n.cl[i.n]
-        g.kn.cl <- kmeans(g.norm, i.m, iter.max=100, nstart=100)
-        g.cl[[i.n]] <- g.kn.cl
-        g.cent[[i.n]] <- g.kn.cl$centers
+    for (i.n in 1:length(m.cl)) {
+        i.m  <- m.cl[i.n]
+        g.km.cl <- kmeans(g.norm, i.m, iter.max=100, nstart=100)
+        g.cl[[i.n]] <- g.km.cl
+        g.cent[[i.n]] <- g.km.cl$centers
         g.rep.names <- rep(NA, i.m)
-        for (i.clg in 1:nrow(g.kn.cl$centers)) {
-            d.g <- apply((abs(g.norm - g.kn.cl$centers[i.clg, ])), 1, sum)
+        for (i.clg in 1:nrow(g.km.cl$centers)) {
+            d.g <- apply((abs(g.norm - g.km.cl$centers[i.clg, ])), 1, sum)
             tmp <- which(d.g == min(d.g))
             g.rep.names[i.clg] <- rownames(g.norm)[tmp]
         }
         g.cl.names[[i.n]] <- g.rep.names
     }
-    names(g.cl) <- paste('m.', n.cl, sep='')
-    names(g.cent) <- paste('m.', n.cl, sep='')
-    names(g.cl.names)  <- paste('m.', n.cl, sep='')
+    names(g.cl) <- paste('m.', m.cl, sep='')
+    names(g.cent) <- paste('m.', m.cl, sep='')
+    names(g.cl.names)  <- paste('m.', m.cl, sep='')
     ## return variables k-means centroid, fit and names of
     ## representative genes
     return(list(cent.dat=g.cent, cl.kmean=g.cl, rep.gns=g.cl.names))
