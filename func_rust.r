@@ -191,46 +191,46 @@ RustKstt <- function(wFit=NULL, betaFit, t){
 ##' @param n.core
 ##' @return
 ##' @author anas ahmad rana
-RustCrossValClust.p <- function(g.dat, t.dat=ncol(g.dat), stt.v=1:5, m.cl = seq(4, 20, 2),
-                                n.core = 20) {
+RustCrossValClust.p <- function(g.dat, t.dat=ncol(g.dat), k.stt, m.cl = seq(4, 20, 2),
+                                n.core = 20, n.genes=nrow(g.dat)) {
     ## cluster genes
     cl.dat <- RustCluster(g.dat, m.cl = m.cl)
     g.cen <- cl.dat[['cent.dat']]
+    t.ko <- 2:length(t.dat)
     ## define matrix for parameters in mclapply
-    vec.mt <- cbind(rep(1:length(m.cl), length(t.ko)), rep(t.ko, each=length(m.cl)))
+    vec.mt <- cbind(rep(m.cl, length(t.ko)), rep(t.ko, each=length(m.cl)))
     ## start mcl apply for all time-p knockout
-    n.ml <- length(stt.v) * length(m.cl)
-    fit.k.m <- mclapply(1:n.ml, function(x) {
-        x.name <- paste('m.', cs.mat[x, 2], sep='')
-        i.v <- 1
+    fit.k.m <- mclapply(1:nrow(vec.mt), function(x) {
+        t.dl <- vec.mt[x, 2]
+        m.name <- paste('m', vec.mt[x, 1], sep='.')
         ## First fit all the data for different m and k
-        fit.cl <- vector('list', length(t.dat))
-        fit.conv <- 10^10
+        fit.conv <- 10
         fit.iter <- 1
-        while (fit.conv != 0 | fit.iter > 5) {
-            fit <- RustFitKstt(g.cen[[x.name]], t.dat, lambda=0, n.states = cs.mat[x, 1])
-            fit.conv <- fit$fit$convergence
+        while (fit.conv != 0 | fit.iter > 3) {
+            fit.m <- RustFitKstt(g.cen[[m.name]][, -t.dl], t.dat[-t.dl],
+                                 lambda=0, n.states=k.stt)
+            fit.conv <- fit.m$fit$convergence
             fit.iter <- fit.iter + 1
         }
-        print(paste('done all:', cs.mat[x, 1]))
-        fit.cl[[i.v]]  <- fit
-        ## Fit 2:end t-ko for different m and k
-        for (i.v in 2:length(t.dat)) {
-            fit.conv <- 10^10
+        w <- fit.m$w
+        beta <- matrix(0, n.genes, k.stt)
+        rownames(beta) <- rownames(g.dat[1:n.genes, ])
+        for (i.j in 1:n.genes) {
             fit.iter <- 1
-            while (fit.conv != 0 | fit.iter > 5) {
-                fit <- RustFitKstt(g.cen[[x.name]][, -i.v], t.dat[-i.v], lambda=0,
-                                   n.states = cs.mat[x, 1])
-                fit.conv <- fit$fit$convergence
+            fit.conv <- 10
+            while (fit.conv != 0 | fit.iter > 3) {
+                fit.tmp <- RustFitKstt(g.dat[i.j, -t.dl], t.dat[-t.dl], lambda=0,
+                                       n.states=k.stt, fix.w=TRUE, w=w)
+                fit.conv <- fit.tmp$fit$convergence
                 fit.iter <- fit.iter + 1
             }
-            fit.cl[[i.v]]  <- fit
+            beta[i.j, ] <- fit.tmp$beta
         }
-        names(fit.cl) <- paste('tpt.', 1:length(t.dat), sep='')
-        print(paste('done t.ko:', cs.mat[x, 1]))
+        return(list(cl.fit=fit.m, w=w, beta=beta))
+        print(paste('done t.ko:', t.dl, 'm', m.name))
     }, #end of function in mclapply
                         mc.preschedule = TRUE, mc.cores = n.core)
-    names(fit.k.m) <- paste('k.', cs.mat[, 1],'_m.', cs.mat[, 2], sep='')
+    names(fit.k.m) <- paste('m.', vec.mt[, 1],'_td.', vec.mt[, 2], sep='')
     return(list(cl.dat = cl.dat, fit = fit.k.m))
 }
 
