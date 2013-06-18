@@ -336,61 +336,26 @@ PlotWmatConvClust <- function(w.cl, tau, plot.as=FALSE, title.g=''){
 ##   ********************************************************************************
 
 
-RustCvRss <- function(fit.file, t.ko=NULL, k.states=NULL){
+RustCvRss <- function(fit.file, t.ko=NULL, k.states=NULL, m.cl=NULL){
     load(fit.file)
     vec.mt <- cbind(rep(1:length(m.cl), length(t.ko)), rep(t.ko, each=length(m.cl)))
     names(fit) <- paste('m', vec.mt[, 1], 'td', vec.mt[, 2], sep='.')
-    t.dat <- as.numeric(gsub("hr", "", colnames(g.norm)))
+    t.dat <- as.numeric(gsub("hr", "", colnames(g.dat)))
 
-    rss.v <- rep(NA, nrow(vec.mt))
-    rss.m <- matrix(0, length(t.ko), length(m.cl))
+    rss.mat <- matrix(0, length(m.cl), length(t.ko))
     g.sd <- apply(asinh(g.dat), 1, sd)
-    for (i.v in 1:nrow(vec.mt)) {
-        par.tmp <- fit[[i.v]]
-        a.fit <- RustKstt(par.tmp$w, par.tmp$beta, t.dat)
-        tmp <- vec.mt[i.v, ]
-        rss.v[i.v] <- mean((asinh(a.fit$y[, tmp[2]]) - asinh(g.dat[, tmp[2]]))^2)
-        rss.m[tmp[2] - 1, tmp[1]] <- mean(((asinh(a.fit$y[, 2]) - asinh(g.dat[, 2])) / g.sd)^2)
+    i.j <- 1
+    for (i.k in 1:length(m.cl)) {
+        for (i.t in t.ko) {
+            beta <- fit[[i.j]]$beta
+            w <- fit[[i.j]]$w
+            tmp <- RustKstt(w, beta, t.dat[i.t])
+            rss.mat[i.k, i.t - 1] <- mean(((asinh(tmp$y) - asinh(g.dat[, i.t]))^2) / g.sd^2)
+            i.j <- i.j + 1
+        }
     }
 
-    rss.df <- data.frame(rss=rss.v, m=m.cl[vec.mt[, 1]], t.d=vec.mt[, 2])
-    plot.rss.m <- ggplot(dat=rss.df, aes(x=m, y=rss))+
-        geom_line(size=1.2) +
-            geom_point(size=3) +
-                xlab(expression('No. of clusters, m')) +
-                    ylab('MSE') +
-                        facet_wrap( ~ t.d) +
-                            theme_bw() +
-                                theme(legend.key = element_blank(),
-                                      legend.key.width = unit(0.8, 'cm'),
-                                      legend.title = element_blank(),
-                                      legend.text = element_text(size = 14),
-                                      axis.title.x = element_text(face='bold', size=20),
-                                      axis.title.y = element_text(face='bold', size=20),
-                                      axis.text.x = element_text(size=16),
-                                      axis.text.y = element_text(size=16),
-                                      strip.text.x = element_text(size=10),
-                                      strip.background = element_rect(colour = NA),
-                                      plot.title = element_text(face='bold'))
-    plot.rss.t <- ggplot(dat=rss.df, aes(x=t.d, y=rss))+
-        geom_line(size=1.2) +
-            geom_point(size=3) +
-                xlab('time point deletion') +
-                    ylab('MSE') +
-                        facet_wrap( ~ m) +
-                            theme_bw() +
-                                theme(legend.key = element_blank(),
-                                      legend.key.width = unit(0.8, 'cm'),
-                                      legend.title = element_blank(),
-                                      legend.text = element_text(size = 14),
-                                      axis.title.x = element_text(face='bold', size=20),
-                                      axis.title.y = element_text(face='bold', size=20),
-                                      axis.text.x = element_text(size=16),
-                                      axis.text.y = element_text(size=16),
-                                      strip.text.x = element_text(size=10),
-                                      strip.background = element_rect(colour = NA),
-                                      plot.title = element_text(face='bold'))
-    rss.df <- data.frame(rss=apply(sqrt(rss.m), 2, mean), m = m.cl)
+    rss.df <- data.frame(rss=apply(sqrt(rss.mat), 1, mean), m = m.cl)
     plot.rss.cv <- ggplot(dat=rss.df, aes(x=m, y=rss)) +
         geom_line(size=1.7) +
             geom_point(size=4) +
@@ -409,8 +374,7 @@ RustCvRss <- function(fit.file, t.ko=NULL, k.states=NULL){
                                   strip.background = element_rect(colour = NA),
                                   plot.title = element_text(face='bold'))
 
-    return(list(rss = rss.m, rss.v=rss.v, plot.rss.cv=plot.rss.cv, plot.rss.t=plot.rss.t,
-                plot.rss.m=plot.rss.m))
+    return(list(rss = rss.mat, plot.rss.cv=plot.rss.cv))
 }
 
 RustCvRssGridClst <- function(fit.file, n.stt=4, n.gn=120, t.ko=29, sim.file, m.cl) {
