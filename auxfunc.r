@@ -10,7 +10,7 @@ require(grid)
 ##' @param b.fit beta matrix from fitting
 ##' @return
 ##' @author anas ahmad rana
-PlotCompBetaRust <- function(b.sim, b.fit, type.v = c('true', 'estimate')){
+PlotCompBetaRust <- function(b.sim, b.fit, type.v = c('true', 'estimate')) {
 
     p <- nrow(b.sim)
     k <- ncol(b.sim)
@@ -50,7 +50,7 @@ PlotCompBetaRust <- function(b.sim, b.fit, type.v = c('true', 'estimate')){
 ##' @param w fitted w matrix
 ##' @return
 ##' @author anas ahmad rana
-PlotCompTrajRust <- function(g.dat, t, b.fit, w, p.title = ''){
+PlotCompTrajRust <- function(g.dat, t, b.fit, w, p.title = '') {
 
 
     p <- nrow(b.fit)
@@ -82,7 +82,7 @@ PlotCompTrajRust <- function(g.dat, t, b.fit, w, p.title = ''){
     return(t.g)
 }
 
-PlotTrajRust <- function(g.dat, t, p.title = ''){
+PlotTrajRust <- function(g.dat, t, p.title = '') {
 
     p <- nrow(g.dat)
     sim.dat <- data.frame(g=as.vector(g.dat), gn = factor(rep( (rownames(g.dat)), length(t))),
@@ -108,7 +108,7 @@ PlotTrajRust <- function(g.dat, t, p.title = ''){
     return(t.g)
 }
 
-PlotBetaRust <- function(b.sim){
+PlotBetaRust <- function(b.sim) {
 
 
     p <- nrow(b.sim)
@@ -141,9 +141,9 @@ PlotBetaRust <- function(b.sim){
 Vplayout <- function(x, y)
     viewport(layout.pos.row = x, layout.pos.col =y)
 
-PlotCvLambdaRust <- function(dat.mat, lambda, x.lab='', y.lab='', n.run=1, l.sz=1.2){
+PlotCvLambdaRust <- function(dat.mat, lambda, x.lab='', y.lab='', n.run=1, l.sz=1.2) {
 
-    if(n.run==1){
+    if(n.run==1) {
         dat.l <- data.frame(y.val=apply(dat.mat, 1, sum), lambda=lambda)
         Plotp <- ggplot(dat.l, aes(x=lambda, y=y.val)) +
             geom_point(size=2) +
@@ -158,7 +158,7 @@ PlotCvLambdaRust <- function(dat.mat, lambda, x.lab='', y.lab='', n.run=1, l.sz=
                                       axis.text.y = element_text(size=12),
                                       strip.background = element_rect(colour = NA),
                                       plot.title = element_text(face='bold'))
-    } else if(n.run>1){
+    } else if(n.run>1) {
         dat.l <- data.frame(y.val=as.vector(dat.mat), lambda=rep(lambda, ncol(dat.mat)),
                             nrun=as.factor(rep(1:ncol(dat.mat), each=nrow(dat.mat))))
         Plotp <- ggplot(dat.l, aes(x=lambda, y=y.val, col=nrun, group=nrun)) +
@@ -179,7 +179,7 @@ PlotCvLambdaRust <- function(dat.mat, lambda, x.lab='', y.lab='', n.run=1, l.sz=
 }
 
 PlotCvFacetLambdaRust <- function(dat.mat, lambda, x.lab='predicted t-point', y.lab='RSS', t.dat,
-                                  title.g='RSS of t-pt knockout, facet lambda'){
+                                  title.g='RSS of t-pt knockout, facet lambda') {
 
     rss.tk <- data.frame(rss=as.vector(rss.mat), lambda=rep(lambda, length(t.dat)-1),
                          t.ko = rep(2:(length(t.dat) ), each=nrow(dat.mat)))
@@ -204,7 +204,7 @@ PlotCvFacetLambdaRust <- function(dat.mat, lambda, x.lab='predicted t-point', y.
 }
 
 PlotCvFacetTrust <- function(dat.mat, lambda, x.lab='lambda', y.lab='RSS', t.dat,
-                             title.g='RSS of t-pt knockout, facet predicted t'){
+                             title.g='RSS of t-pt knockout, facet predicted t') {
     rss.tk <- data.frame(rss=as.vector(rss.mat), lambda=rep(lambda, length(t.dat)-1),
                          t.ko = rep(2:(length(t.dat) ), each=nrow(dat.mat)))
 
@@ -229,8 +229,8 @@ PlotCvFacetTrust <- function(dat.mat, lambda, x.lab='lambda', y.lab='RSS', t.dat
 }
 
 PlotBetaScatterRust <- function(beta.sc, beta.al, title.g='Scatter plot comparing beta values',
-                                x.lab, b.scl = 'log', lmbd.vec, n.stt=4, n.gn=12){
-    if(b.scl=='log'){  #All the beta values below are shifted by one,
+                                x.lab, b.scl = 'log', lmbd.vec, n.stt=4, n.gn=12) {
+    if(b.scl=='log') {  #All the beta values below are shifted by one,
                                         #the assumption is that they contain 0 values
         beta.dm <- data.frame(beta0=rep(beta.sc +1 , ncol(beta.al)), beta=as.vector(beta.al +1),
                               lambda = rep(lmbd.vec, each=nrow(beta.al)),
@@ -262,13 +262,13 @@ PlotBetaScatterRust <- function(beta.sc, beta.al, title.g='Scatter plot comparin
     }
 }
 
-PlotWmatConvClust <- function(w.cl, tau, plot.as=FALSE, title.g=''){
+PlotWmatConvClust <- function(w.cl, tau, plot.as=FALSE, title.g='') {
     if (plot.as == 'tau') {
         dat.cl <- data.frame(y.val=as.vector(1/w.cl), ind=as.factor(rep(1:length(tau), ncol(w.cl))),
                              cl=rep(1:ncol(w.cl) +1, each=length(tau)))
         dat.sim <- data.frame(y.val=tau, ind=as.factor(1:length(tau)))
         y.lab <- 'Mean jump time'
-    } else if (plot.as == 'diffw'){
+    } else if (plot.as == 'diffw') {
         dat.cl <- data.frame(y.val=as.vector(w.cl), ind=as.factor(rep(1:length(tau), ncol(w.cl))),
                              cl=rep(1:ncol(w.cl) +1, each=length(tau)))
         dat.sim <- data.frame(y.val=(1/tau - 1/tau), ind=as.factor(1))
@@ -284,7 +284,7 @@ PlotWmatConvClust <- function(w.cl, tau, plot.as=FALSE, title.g=''){
     pcol <- c('#e74c3c', '#27ae60', '#2980b9', '#f39c12')
     w.leg <- c(expression(w[12]), expression(w[23]), expression(w[34]))
 
-    if(plot.as == 'diffw'){
+    if(plot.as == 'diffw') {
         ggplot(dat.cl, aes(x = cl, y = y.val, col = ind)) +
             geom_point(size = 2) +
                 geom_line(size = 1, aes(linetype = ind)) +
@@ -336,7 +336,7 @@ PlotWmatConvClust <- function(w.cl, tau, plot.as=FALSE, title.g=''){
 ##   ********************************************************************************
 
 
-RustCvRss <- function(fit.file, t.ko=NULL, k.states=NULL, m.cl=NULL){
+RustCvRss <- function(fit.file, t.ko=NULL, k.states=NULL, m.cl=NULL) {
     load(fit.file)
     vec.mt <- cbind(rep(1:length(m.cl), length(t.ko)), rep(t.ko, each=length(m.cl)))
     names(fit) <- paste('m', vec.mt[, 1], 'td', vec.mt[, 2], sep='.')
