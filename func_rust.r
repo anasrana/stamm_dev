@@ -380,7 +380,7 @@ RustChsKL <- function (g.dat, t.dat, m, k.vec=2:5, pen.vec=seq(0, 0.2, 0.05), pl
     return(list(k.fit=fit.k, beta=beta, w=w, bic=bic, l.min=l.min))
 }
 
-FitClGns <- function(g.dat, t.dat, l.pen=0, k.stt, m, pll=FALSE, w=NULL) {
+FitClGns <- function(g.dat, t.dat, l.pen=0, k.stt, m, pll=FALSE, w=NULL, n.core=20) {
     if (is.null(w)) {
         ## Normalise data to be univariate and fit clusters
         g.norm <- g.dat / apply(g.dat, 1, sd)
@@ -401,7 +401,7 @@ FitClGns <- function(g.dat, t.dat, l.pen=0, k.stt, m, pll=FALSE, w=NULL) {
         aicc <- rep(NA, length(l.pen))
         for (i.l in 1:length(l.pen)) {
             fit.g[[i.l]] <- RustFitGns(g.dat=g.dat, t.dat=t.dat, lambda=l.pen[i.l],
-                                       n.states=k.stt, w=w, pll=pll)
+                                       n.states=k.stt, w=w, pll=pll, n.core=n.core)
             bic[i.l] <- fit.g[[i.l]]$ms[2]
             aicc[i.l] <- fit.g[[i.l]]$ms[4]
 
@@ -423,7 +423,7 @@ FitClGns <- function(g.dat, t.dat, l.pen=0, k.stt, m, pll=FALSE, w=NULL) {
 ##' @param pll logical run in parallel if set to true
 ##' @return
 ##' @author anas ahmad rana
-RustFitGns <- function(g.names=NULL, g.dat, t.dat, lambda=0, n.states, w, pll=FALSE){
+RustFitGns <- function(g.names=NULL, g.dat, t.dat, lambda=0, n.states, w, pll=FALSE, n.core=20){
     if (!is.null(g.names)) {
         g.name.idx <- which(rownames(g.dat)==g.names)
     } else {
@@ -433,8 +433,8 @@ RustFitGns <- function(g.names=NULL, g.dat, t.dat, lambda=0, n.states, w, pll=FA
     if (pll) {
         fit.g <- mclapply(g.name.idx, function(x)
                           cl.fit = RustFitKstt(g.dat=g.dat[x, ], t.dat=t.dat, lambda=lambda,
-                              n.states=n.states, w=w, fix.w=TRUE)
-                          )
+                              n.states=n.states, w=w, fix.w=TRUE),
+                          mc.cores = n.core)
     } else {
         fit.g <- lapply(g.name.idx, function(x)
                         cl.fit = RustFitKstt(g.dat=g.dat[x, ], t.dat=t.dat, lambda=lambda,
