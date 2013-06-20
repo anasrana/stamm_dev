@@ -1,6 +1,43 @@
 require(ggplot2)
 require(grid)
 
+## ********************************************************************************
+## ********* Auxiliary functions for output variables from func_rust.r ************
+## ********************************************************************************
+
+##' Function calculates MSE adjusted for varying standard deviation per gene
+##'
+##' .. content for \details{} ..
+##' @title
+##' @param fit
+##' @param loop.var
+##' @param t.dat
+##' @param g.dat
+##' @return
+##' @author anas ahmad rana
+DLmse <- function(fit, loop.var, t.dat, g.dat) {
+    outer.v <- unique(loop.var[, 1])
+    inner.v <- unique(loop.var[, 2])
+    mse.mat <- matrix(NA, length(outer.v), length(inner.v))
+    g.sd <- apply(asinh(g.dat), 1, sd)
+    i.f <- 1
+    for (i.o in 1:length(outer.v)) {
+        for (i.i in 1:length(inner.v)) {
+            beta <- fit[[i.f]]$fit.g$beta
+            w <- fit[[i.f]]$fit.g$w
+            tmp <- RustKstt(w, beta, t.dat[inner.v[i.i]])
+            mse.mat[i.o, i.i] <- mean(((asinh(tmp$y) - asinh(g.dat[, inner.v[i.i]])) / g.sd)^2)
+            i.f <- i.f + 1
+        }
+    }
+    mse <- apply(sqrt(mse.mat), 1, mean)
+    return(mse)
+}
+
+## ********************************************************************************
+## ********* General plotting functions *******************************************
+## ********************************************************************************
+
 ##' Function to show beta values for sim next to beta values for fit
 ##'
 ##'
