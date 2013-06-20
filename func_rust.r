@@ -245,8 +245,8 @@ RustCrossValClust.p <- function(g.dat, t.dat, k.stt, m.cl = seq(4, 20, 2),
                 g.km <- kmeans(g.norm, i.m, iter.max=100, nstart=50)
                 fit.cl[[i.a]] <- RustFitKstt(g.km$centers, t.dat[-i.t], lambda=0, n.states=k.stt)
                 w <- fit.cl[[i.a]]$w
-                fit.gn[[i.a]] <- RustFitGns(g.dat=g.dat.t, t.dat[-i.t], n.states=k.stt, w=w,
-                                            pll=TRUE, n.core=n.core)
+                fit.gn[[i.a]] <- RustFitGns(g.dat=g.dat.t, t.dat=t.dat[-i.t], n.states=k.stt,
+                                            w=w, pll=TRUE, n.core=n.core)
                 print('... DONE')
             }
         }
