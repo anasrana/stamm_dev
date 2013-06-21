@@ -212,6 +212,7 @@ RustCrossValClust.p <- function(g.dat, t.dat, k.stt, m.cl = seq(4, 20, 2),
             fit.gn[[i.a]] <- RustFitGns(g.dat=g.dat.t, t.dat=t.dat[-i.t], n.states=k.stt,
                                         w=w, pll=TRUE, n.core=n.core)
             print('... DONE')
+            i.a <- i.a + 1
             l.name <- append(l.name, paste('m.', i.m, '_tDel.', i.t, sep=''))
         }
     }
