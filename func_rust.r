@@ -186,74 +186,38 @@ RustKstt <- function(wFit=NULL, betaFit, t){
 ##' @title
 ##' @param g.dat
 ##' @param t.dat
-##' @param stt.v
-##' @param n.cl
+##' @param k.stt
+##' @param m.cl
 ##' @param n.core
+##' @param n.genes
 ##' @return
 ##' @author anas ahmad rana
 RustCrossValClust.p <- function(g.dat, t.dat, k.stt, m.cl = seq(4, 20, 2),
                                 n.core = 20, n.genes=nrow(g.dat)) {
     t.ko <- 2:length(t.dat)
-    if ((length(m.cl) * length(t.dat)) > n.genes) {    ## cluster genes
-        cl.dat <- RustCluster(g.dat, m.cl = m.cl)
-        g.cen <- cl.dat[['cent.dat']]
-        ## define matrix for parameters in mclapply
-        vec.mt <- cbind(rep(m.cl, length(t.ko)), rep(t.ko, each=length(m.cl)))
-        ## start mcl apply for all time-p knockout
-        fit.k.m <- mclapply(1:nrow(vec.mt), function(x) {
-            t.dl <- vec.mt[x, 2]
-            m.name <- paste('m', vec.mt[x, 1], sep='.')
-            ## First fit all the data for different m and k
-            fit.conv <- 10
-            fit.iter <- 1
-            while (fit.conv != 0 | fit.iter > 3) {
-                fit.m <- RustFitKstt(g.cen[[m.name]][, -t.dl], t.dat[-t.dl],
-                                     lambda=0, n.states=k.stt)
-                fit.conv <- fit.m$fit$convergence
-                fit.iter <- fit.iter + 1
-            }
-            w <- fit.m$w
-            beta <- matrix(0, n.genes, k.stt)
-            rownames(beta) <- rownames(g.dat[1:n.genes, ])
-            for (i.j in 1:n.genes) {
-                fit.iter <- 1
-                fit.conv <- 10
-                while (fit.conv != 0 | fit.iter > 3) {
-                    fit.tmp <- RustFitKstt(g.dat[i.j, -t.dl], t.dat[-t.dl], lambda=0,
-                                           n.states=k.stt, fix.w=TRUE, w=w)
-                    fit.conv <- fit.tmp$fit$convergence
-                    fit.iter <- fit.iter + 1
-                }
-                beta[i.j, ] <- fit.tmp$beta
-            }
-            return(list(cl.fit=fit.m, w=w, beta=beta))
-            print(paste('done t.ko:', t.dl, 'm', m.name))
-        }, #end of function in mclapply
-                            mc.preschedule = TRUE, mc.cores = n.core)
-        names(fit.k.m) <- paste('m.', vec.mt[, 1],'_td.', vec.mt[, 2], sep='')
-        return(list(cl.dat = cl.dat, fit = fit.k.m))
-    } else if ((length(m.cl) * length(t.dat)) < n.genes) {
-        fit.cl <- vector('list', length(m.cl) * (length(t.ko)))
-        fit.gn <- vector('list', length(m.cl) * (length(t.ko)))
-        i.a <- 1
-        for (i.m in m.cl) {
-            for (i.t in t.ko) {
-                print(paste('fitting m =', i.m, 'time deletion ', i.t, '...'))
-                g.dat.t <- g.dat[, -i.t]
-                g.sd <- apply(g.dat.t, 1, sd)
-                g.norm <- g.dat.t / g.sd
-                g.km <- kmeans(g.norm, i.m, iter.max=100, nstart=50)
-                fit.cl[[i.a]] <- RustFitKstt(g.km$centers, t.dat[-i.t], lambda=0, n.states=k.stt)
-                w <- fit.cl[[i.a]]$w
-                fit.gn[[i.a]] <- RustFitGns(g.dat=g.dat.t, t.dat=t.dat[-i.t], n.states=k.stt,
-                                            w=w, pll=TRUE, n.core=n.core)
-                print('... DONE')
-            }
+
+    fit.cl <- vector('list', length(m.cl) * (length(t.ko)))
+    fit.gn <- vector('list', length(m.cl) * (length(t.ko)))
+    i.a <- 1
+    l.name <- NULL
+    for (i.m in m.cl) {
+        for (i.t in t.ko) {
+            print(paste('fitting m =', i.m, 'time deletion ', i.t, '...'))
+            g.dat.t <- g.dat[, -i.t]
+            g.sd <- apply(g.dat.t, 1, sd)
+            g.norm <- g.dat.t / g.sd
+            g.km <- kmeans(g.norm, i.m, iter.max=100, nstart=50)
+            fit.cl[[i.a]] <- RustFitKstt(g.km$centers, t.dat[-i.t], lambda=0, n.states=k.stt)
+            w <- fit.cl[[i.a]]$w
+            fit.gn[[i.a]] <- RustFitGns(g.dat=g.dat.t, t.dat=t.dat[-i.t], n.states=k.stt,
+                                        w=w, pll=TRUE, n.core=n.core)
+            print('... DONE')
+            l.name <- append(l.name, paste('m.', i.m, '_tDel.', i.t, sep=''))
         }
-        names(fit.cl) <- paste('m', rep(m.cl, length(t.ko)), 'tDel',
-                               rep(t.ko, each=length(m.cl)), sep='.') -> names(fit.gn)
-        return(list(fit.cluster=fit.cl, fit.genes=fit.gn))
     }
+    names(fit.cl) <- l.name
+    return(list(fit.cluster=fit.cl, fit.genes=fit.gn))
+
 }
 
 ##' Fits centroid for given number of cluster sizes and fixed number of states fits
