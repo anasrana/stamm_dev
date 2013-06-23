@@ -63,8 +63,8 @@ RustFitKstt <- function(g.dat, t.dat, lambda = 0.01, n.states = 3, fix.w=FALSE, 
     while (fit.conv != 0 | fit.iter > max.fit.iter) {
         res.tmp <- nlminb(x0, fun, lower = 0, upper = max(g.dat), scale = 1 / par.scale,
                   control=list(iter.max=10000, eval.max=7000, rel.tol=10^-14, sing.tol=10^-14))
-        if (res$convergence < fit.conv){
-            fit.conv <- res$convergence
+        if (res.tmp$convergence < fit.conv){
+            fit.conv <- res.tmp$convergence
             res <- res.tmp
         }
         fit.iter  <- fit.iter + 1
