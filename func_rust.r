@@ -207,17 +207,7 @@ RustCrossValClust.p <- function(g.dat, t.dat, k.stt, m.cl = seq(4, 20, 2),
             g.sd <- apply(g.dat.t, 1, sd)
             g.norm <- g.dat.t / g.sd
             g.km <- kmeans(g.norm, i.m, iter.max=100, nstart=50)
-            fit.iter  <- 1
-            max.fit.iter <- 5
-            while (fit.conv != 0 | fit.iter > max.fit.iter) {
-                fit.cl[[i.a]] <- RustFitKstt(g.km$centers, t.dat[-i.t], lambda=0, n.states=k.stt)
-                fit.conv <- fit.cl[[i.a]]$fit$convergence
-                fit.iter  <- fit.iter + 1
-            }
-            if (fit.conv != 0) {
-                print('ERROR: did not converge')
-            }
-
+            fit.cl[[i.a]] <- RustFitKstt(g.km$centers, t.dat[-i.t], lambda=0, n.states=k.stt)
             w <- fit.cl[[i.a]]$w
             fit.gn[[i.a]] <- RustFitGns(g.dat=g.dat.t, t.dat=t.dat[-i.t], n.states=k.stt,
                                         w=w, pll=TRUE, n.core=n.core)
