@@ -56,8 +56,18 @@ RustFitKstt <- function(g.dat, t.dat, lambda = 0.01, n.states = 3, fix.w=FALSE, 
     } else {
         par.scale <- c(rep(1, n.states - 1), rep(apply(g.dat, 1, max), n.states))
     }
-    res <- nlminb(x0, fun, lower = 0, upper = max(g.dat), scale = 1 / par.scale,
+
+    max.fit.iter <- 8
+    fit.conv <- 10^8
+    while (fit.conv != 0 | fit.iter > max.fit.iter) {
+        res.tmp <- nlminb(x0, fun, lower = 0, upper = max(g.dat), scale = 1 / par.scale,
                   control=list(iter.max=10000, eval.max=7000, rel.tol=10^-14, sing.tol=10^-14))
+        if (res$convergence < fit.conv){
+            fit.conv <- res$convergence
+            res <- res.tmp
+        }
+        fit.iter  <- fit.iter + 1
+    }
 
     par <- RustPar(g.dat, res$par, n.states, fix.w=fix.w, wFit=w)
 
