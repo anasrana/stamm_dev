@@ -23,7 +23,7 @@ library(multicore)      #Parallelisation of code
 ##' It returns the fitted $w$ matrix and the $/beta$ matrix. It also returns a  obj vector
 ##' that contains the rss, bic and aic scores for the fit.
 ##' @author anas ahmad rana
-RustFitKstt <- function(g.dat, t.dat, lambda = 0.01, n.states = 3, fix.w=FALSE, w=NULL) {
+RustFitKstt <- function(g.dat, t.dat, lambda=0.01, n.states=3, fix.w=FALSE, w=NULL, max.fit.iter=3) {
     p <- nrow(g.dat)
     if (fix.w) {
         p <- 1
@@ -57,7 +57,6 @@ RustFitKstt <- function(g.dat, t.dat, lambda = 0.01, n.states = 3, fix.w=FALSE, 
         par.scale <- c(rep(1, n.states - 1), rep(apply(g.dat, 1, max), n.states))
     }
 
-    max.fit.iter <- 8
     fit.conv <- 10^8
     fit.iter <- 1
     while (fit.conv != 0 | fit.iter > max.fit.iter) {
