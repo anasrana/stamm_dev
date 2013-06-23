@@ -40,7 +40,7 @@ RustFitKstt <- function(g.dat, t.dat, lambda = 0.01, n.states = 3, fix.w=FALSE, 
     else
         g.nl <- sd(g.dat)
 
-    fun <- function(x){
+    fun <- function(x) {
         tmp <- RustPar(x = x, n.states = n.states, p = p, fix.w = fix.w, wFit = wFit)
         wFit <- tmp$w
         betaFit <- tmp$beta
@@ -151,7 +151,7 @@ RustPar <- function(g.dat=NULL, x, n.states, p=nrow(g.dat), fix.w=FALSE, wFit=NU
 ##' @param t time points
 ##' @return S unlogged trajectory for the arguments. P state occupation probabilities.
 ##' @author anas ahmad rana
-RustKstt <- function(wFit=NULL, betaFit, t){
+RustKstt <- function(wFit=NULL, betaFit, t) {
     n <- length(t)
     p <- nrow(betaFit)
     ## create new matrix containing -offdiag on diag
@@ -207,7 +207,17 @@ RustCrossValClust.p <- function(g.dat, t.dat, k.stt, m.cl = seq(4, 20, 2),
             g.sd <- apply(g.dat.t, 1, sd)
             g.norm <- g.dat.t / g.sd
             g.km <- kmeans(g.norm, i.m, iter.max=100, nstart=50)
-            fit.cl[[i.a]] <- RustFitKstt(g.km$centers, t.dat[-i.t], lambda=0, n.states=k.stt)
+            fit.iter  <- 1
+            max.fit.iter <- 5
+            while (fit.conv != 0 | fit.iter > max.fit.iter) {
+                fit.cl[[i.a]] <- RustFitKstt(g.km$centers, t.dat[-i.t], lambda=0, n.states=k.stt)
+                fit.conv <- fit.cl[[i.a]]$fit$convergence
+                fit.iter  <- fit.iter + 1
+            }
+            if (fit.conv != 0) {
+                print('ERROR: did not converge')
+            }
+
             w <- fit.cl[[i.a]]$w
             fit.gn[[i.a]] <- RustFitGns(g.dat=g.dat.t, t.dat=t.dat[-i.t], n.states=k.stt,
                                         w=w, pll=TRUE, n.core=n.core)
@@ -244,16 +254,16 @@ RustFitCentroid.p <- function(g.dat, t.dat, g.cent = NULL, n.cl = c(2, seq(5, 30
     }
     ## Fit all cluster sizes in paralell
     options(cores=n.core)
-    fit <- mclapply(1:length(g.cent), function(x){
+    fit <- mclapply(1:length(g.cent), function(x) {
         fit.conv <- 10^10
         fit.iter  <- 1
-        max.fit.iter <- 5
+        max.fit.iter <- 8
         while (fit.conv != 0 | fit.iter > max.fit.iter) {
             fit <- RustFitKstt(g.cent[[x]], t.dat , lambda = pen, n.states = n.stt)
             fit.conv <- fit$fit$convergence
             fit.iter  <- fit.iter + 1
         }
-        if (fit.conv != 0){
+        if (fit.conv != 0) {
             print('ERROR: did not converge')
         }
         print(paste('fit: cl = ', n.cl[x], 'with RSS =',fit$ms[1], '... done!'))
@@ -322,7 +332,7 @@ ParClusterCV <- function(g.dat, t.dat=NULL, m.cl=seq(5, 20, 2), t.ko=2:ncol(g.da
     g.norm <- g.dat / apply(g.dat, 1, sd)
     vec.mt <- cbind(rep(1:length(m.cl), length(t.ko)), rep(t.ko, each=length(m.cl)))
 
-    fit <- mclapply(1:nrow(vec.mt), function(x){
+    fit <- mclapply(1:nrow(vec.mt), function(x) {
         t.dl <- vec.mt[x, 2]
         ## Clustered after time point deletion using k-means
         g.km <- kmeans(g.norm[, -t.dl], vec.mt[x, 1], iter.max=100, nstart=20)
@@ -410,7 +420,7 @@ FitClGns <- function(g.dat, t.dat, l.pen=0, k.stt, m, pll=FALSE, w=NULL, n.core=
 ##' @param pll logical run in parallel if set to true
 ##' @return
 ##' @author anas ahmad rana
-RustFitGns <- function(g.names=NULL, g.dat, t.dat, lambda=0, n.states, w, pll=FALSE, n.core=20){
+RustFitGns <- function(g.names=NULL, g.dat, t.dat, lambda=0, n.states, w, pll=FALSE, n.core=20) {
     if (!is.null(g.names)) {
         g.name.idx <- which(rownames(g.dat)==g.names)
     } else {
