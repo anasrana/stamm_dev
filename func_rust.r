@@ -66,6 +66,8 @@ RustFitKstt <- function(g.dat, t.dat, lambda=0.01, n.states=3, fix.w=FALSE, w=NU
             fit.conv <- res.tmp$convergence
             res <- res.tmp
         }
+        if(res.tmp$convergence > 0)
+            print(paste('Not converged, iteration', fit.iter))
         fit.iter  <- fit.iter + 1
     }
 
