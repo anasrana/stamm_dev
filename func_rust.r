@@ -424,9 +424,9 @@ FixedParCV <- function(g.dat, t.dat, lambda=0, k.stt, m, n.core=30, t.ko=2:lengt
         g.sd <- apply(g.dat.t, 1, sd)
         g.norm <- g.dat.t / g.sd
         g.km <- kmeans(g.norm, m, iter.max=100, nstart=50)
-        fit.cl[[i.t]] <- RustFitKstt(g.km$centers, t.dat[-t.ko[i.t]], lambda=0, k.stt=k.stt)
+        fit.cl[[i.t]] <- RustFitKstt(g.km$centers, t.dat[-t.ko[i.t]], lambda=0, n.states=k.stt)
         w <- fit.cl[[i.t]]$w
-        fit.gn[[i.t]] <- RustFitGns(g.dat=g.dat.t, t.dat=t.dat[-t.ko[i.t]], k.stt=k.stt,
+        fit.gn[[i.t]] <- RustFitGns(g.dat=g.dat.t, t.dat=t.dat[-t.ko[i.t]], n.states=k.stt,
                                     w=w, pll=TRUE, n.core=n.core)
         print('... DONE')
     }
