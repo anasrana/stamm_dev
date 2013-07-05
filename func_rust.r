@@ -250,6 +250,41 @@ TDelmse <- function(fit, t.dat, g.dat,  t.ko=2:length(t.dat)) {
 }
 
 
+##' .. content for \description{} (no empty lines) ..
+##'
+##' .. content for \details{} ..
+##' @title
+##' @param g.dat
+##' @param t.dat
+##' @param k.stt
+##' @param m.cl
+##' @param n.core
+##' @param n.genes
+##' @param t.ko
+##' @return
+##' @author anas ahmad rana
+RustCrossVal.p <- function(g.dat, t.dat, k.stt, m.cl, n.core=20, n.genes=nrow(g.dat),
+                           t.ko=2:length(t.dat)) {
+
+    fit.cl <- vector('list', length(t.ko))
+    fit.gn <- vector('list', length(t.ko))
+    for (i.t in t.ko) {
+        cat(paste('fitting m =', m.cl, 'k =', k.stt, 'time deletion ', i.t, '...'))
+        g.dat.t <- g.dat[, -i.t]
+        g.sd <- apply(g.dat.t, 1, sd)
+        g.norm <- g.dat.t / g.sd
+        g.km <- kmeans(g.norm, m.cl, iter.max=100, nstart=50)
+        fit.cl[[i.t]] <- RustFitKstt(g.km$centers, t.dat[-i.t], lambda=0, n.states=k.stt)
+        w <- fit.cl[[i.a]]$w
+        fit.gn[[i.t]] <- RustFitGns(g.dat=g.dat.t, t.dat=t.dat[-i.t], n.states=k.stt,
+                                    w=w, pll=TRUE, n.core=n.core)
+        print('... DONE')
+    }
+    names(fit.cl) <- paste('tDel_', t.ko, sep='') -> names(fit.gn)
+    mse <- TDelmse(fit.gn, t.dat, g.dat, t.ko)
+    return(list(fit.clust=fit.cl, fit.genes=fit.gn, mse=mse))
+}
+
 ##' Scale data and calculate k-means cluster for all vector elements
 ##' of n.cl
 ##'
