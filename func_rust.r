@@ -234,6 +234,22 @@ RustCrossValClust.p <- function(g.dat, t.dat, k.stt, m.cl = seq(4, 20, 2),
 
 }
 
+TDelmse <- function(fit, t.dat, g.dat,  t.ko=2:length(t.dat)) {
+    g.sd <- apply(asinh(g.dat), 1, sd)
+    i.f <- 1
+    for (i.t in 1:length(t.ko)) {
+        beta <- fit[[i.t]]$beta
+        w <- fit[[i.t]]$w
+        if (is.null(beta))
+            stop('wrong variable structure')
+        tmp <- RustKstt(w, beta, t.dat[t.ko[i.t]])
+        mse.mat[i.t] <- mean(((asinh(tmp$y) - asinh(g.dat[, t.ko[i.t]])) / g.sd)^2)
+    }
+    mse <- apply(sqrt(mse.mat), 1, mean)
+    return(mse)
+}
+
+
 ##' Scale data and calculate k-means cluster for all vector elements
 ##' of n.cl
 ##'
