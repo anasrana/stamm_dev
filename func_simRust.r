@@ -77,7 +77,7 @@ RustSim <- function(n.cells = 200, n.genes = 9, tau = c(3.5, 5, 14.5), n.states 
 ##' @return datasim
 ##' @author anas ahmad rana
 AddNoise <- function(sim = NULL, ns.sd, gData = NULL) {
-    if (is.null(gData) & exists('gsim', where = sim) )
+    if (is.null(gData))
         gData <- sim$gsim
     datsim <- asinh(gData) + matrix(rnorm(length(gData), sd = ns.sd), dim(gData))
     datasim <- sinh(datsim)
