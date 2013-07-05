@@ -67,7 +67,7 @@ RustFitKstt <- function(g.dat, t.dat, lambda=0.01, n.states=3, fix.w=FALSE, w=NU
             res <- res.tmp
         }
         if (res.tmp$convergence > 0)
-            print(paste('Not converged, iteration', fit.iter))
+            writeLines(paste('Not converged, iteration', fit.iter))
         fit.iter  <- fit.iter + 1
     }
 
@@ -234,27 +234,37 @@ RustCrossValClust.p <- function(g.dat, t.dat, k.stt, m.cl = seq(4, 20, 2),
 
 }
 
+##' .. content for \description{} (no empty lines) ..
+##'
+##' .. content for \details{} ..
+##' @title
+##' @param fit
+##' @param t.dat
+##' @param g.dat
+##' @param t.ko
+##' @return
+##' @author anas ahmad rana
 TDelmse <- function(fit, t.dat, g.dat,  t.ko=2:length(t.dat)) {
     g.sd <- apply(asinh(g.dat), 1, sd)
     i.f <- 1
+    mse.vec <- rep(NA, length(t.ko))
     for (i.t in 1:length(t.ko)) {
         beta <- fit[[i.t]]$beta
         w <- fit[[i.t]]$w
         if (is.null(beta))
             stop('wrong variable structure')
         tmp <- RustKstt(w, beta, t.dat[t.ko[i.t]])
-        mse.mat[i.t] <- mean(((asinh(tmp$y) - asinh(g.dat[, t.ko[i.t]])) / g.sd)^2)
+        mse.vec[i.t] <- mean(((asinh(tmp$y) - asinh(g.dat[, t.ko[i.t]])) / g.sd)^2)
     }
-    mse <- apply(sqrt(mse.mat), 1, mean)
+    mse <- mean(sqrt(mse.vec))
     return(mse)
 }
-
 
 ##' .. content for \description{} (no empty lines) ..
 ##'
 ##' .. content for \details{} ..
-##' @title
-##' @param g.dat
+##' @title RustLoocv.p
+##' @param g.dat data to be used when fitting
 ##' @param t.dat
 ##' @param k.stt
 ##' @param m.cl
@@ -263,24 +273,27 @@ TDelmse <- function(fit, t.dat, g.dat,  t.ko=2:length(t.dat)) {
 ##' @param t.ko
 ##' @return
 ##' @author anas ahmad rana
-RustCrossVal.p <- function(g.dat, t.dat, k.stt, m.cl, n.core=20, n.genes=nrow(g.dat),
-                           t.ko=2:length(t.dat)) {
-
+RustLoocv.p <- function(g.dat, t.dat, k.stt, m.cl, n.core=20, n.genes=nrow(g.dat), lambda=0,
+                        t.ko=2:length(t.dat)) {
     fit.cl <- vector('list', length(t.ko))
     fit.gn <- vector('list', length(t.ko))
-    for (i.t in t.ko) {
-        cat(paste('fitting m =', m.cl, 'k =', k.stt, 'time deletion ', i.t, '...'))
-        g.dat.t <- g.dat[, -i.t]
+    for (i.t in 1:length(t.ko)) {
+        cat(paste('fitting m =', m.cl, 'k =', k.stt, 'time deletion ', t.ko[i.t]))
+        g.dat.t <- g.dat[, -t.ko[i.t]]
         g.sd <- apply(g.dat.t, 1, sd)
         g.norm <- g.dat.t / g.sd
-        g.km <- kmeans(g.norm, m.cl, iter.max=100, nstart=50)
-        fit.cl[[i.t]] <- RustFitKstt(g.km$centers, t.dat[-i.t], lambda=0, n.states=k.stt)
+        g.km <- kmeans(g.norm, m.cl, iter.max=50, nstart=50)
+        cat('.')
+        fit.cl[[i.t]] <- RustFitKstt(g.km$centers, t.dat[-t.ko[i.t]], lambda=lambda,
+                                     n.states=k.stt)
+        cat('.')
         w <- fit.cl[[i.t]]$w
-        fit.gn[[i.t]] <- RustFitGns(g.dat=g.dat.t, t.dat=t.dat[-i.t], n.states=k.stt,
-                                    w=w, pll=TRUE, n.core=n.core)
-        print('... DONE')
+        fit.gn[[i.t]] <- RustFitGns(g.dat=g.dat.t, t.dat=t.dat[-t.ko[i.t]], n.states=k.stt,
+                                    lambda=lambda, w=w, pll=TRUE, n.core=n.core)
+        cat('. DONE\n')
     }
-    names(fit.cl) <- paste('tDel_', t.ko, sep='') -> names(fit.gn)
+    names(fit.cl) <- paste('tDel_', t.ko, sep='')
+    names(fit.gn) <- paste('tDel_', t.ko, sep='')
     mse <- TDelmse(fit.gn, t.dat, g.dat, t.ko)
     return(list(fit.clust=fit.cl, fit.genes=fit.gn, mse=mse))
 }
