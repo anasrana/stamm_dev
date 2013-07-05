@@ -275,7 +275,7 @@ RustCrossVal.p <- function(g.dat, t.dat, k.stt, m.cl, n.core=20, n.genes=nrow(g.
         g.norm <- g.dat.t / g.sd
         g.km <- kmeans(g.norm, m.cl, iter.max=100, nstart=50)
         fit.cl[[i.t]] <- RustFitKstt(g.km$centers, t.dat[-i.t], lambda=0, n.states=k.stt)
-        w <- fit.cl[[i.a]]$w
+        w <- fit.cl[[i.t]]$w
         fit.gn[[i.t]] <- RustFitGns(g.dat=g.dat.t, t.dat=t.dat[-i.t], n.states=k.stt,
                                     w=w, pll=TRUE, n.core=n.core)
         print('... DONE')
