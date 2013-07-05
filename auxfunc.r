@@ -25,6 +25,12 @@ DLmse <- function(fit, loop.var, t.dat, g.dat) {
         for (i.i in 1:length(inner.v)) {
             beta <- fit[[i.f]]$fit.g$beta
             w <- fit[[i.f]]$fit.g$w
+            if (is.null(beta)) {
+                beta <- fit[[i.f]]$beta
+                w <- fit[[i.f]]$w
+            }
+            if (is.null(beta))
+                stop('wrong variable structure')
             tmp <- RustKstt(w, beta, t.dat[inner.v[i.i]])
             mse.mat[i.o, i.i] <- mean(((asinh(tmp$y) - asinh(g.dat[, inner.v[i.i]])) / g.sd)^2)
             i.f <- i.f + 1
