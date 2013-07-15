@@ -2,7 +2,7 @@ library('ggplot2')
 library('edgeR')
 
 
-LoadMcf10aDat <- function(f.name = NULL, dat.col, col.order) {
+LoadMcf10aDat <- function(f.name = NULL, dat.col, dat.order, sep='\t') {
   if (is.null(f.name)) {
     f.name  <- "~/phd/data/Sandra2012/gene_exp.txt"
     dat.col  <- 2:21
@@ -10,7 +10,7 @@ LoadMcf10aDat <- function(f.name = NULL, dat.col, col.order) {
     dat.null  <-  8:11
   }
 
-  raw.dat <- read.table(f.name, header = TRUE)
+  raw.dat <- read.table(f.name, header = TRUE, sep=sep)
   g.raw <- as.matrix(raw.dat[dat.col])
   g.raw <- g.raw[, dat.order]
   rownames(g.raw)  <- raw.dat$external_gene_id
