@@ -175,10 +175,9 @@ RustKstt <- function(wFit=NULL, betaFit, t) {
         ## initial condition
         p0 <- rep(0, k)
         p0[1] <- 1
-        P <- NULL
+        P <- matrix(NA, p, n)
         for (i in 1:n) {
-            pt <- expm::expm(wFit * t[i], method='Ward77') %*% p0
-            P <- cbind(P, pt)
+            P[, i]pt <- expm::expm(wFit * t[i], method='Ward77') %*% p0
             ## mean gene expression
             S <- betaFit %*% P
         }
