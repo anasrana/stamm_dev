@@ -232,7 +232,7 @@ RustSim.rd <- function(n.cells=200, n.genes=9, tau=c(5, 8, 15), n.states=3, beta
 
 RustSim.dd.exmp <- function(n.cells=200, n.genes=9, tau=c(5, 8, 15), n.states=3, beta.vec=NULL,
                             dt=0.01, end.time=30, av.noise=0.01, stt.noise=rep(0, n.states),
-                            jump.dist='exp', sd.par=NULL, rate.dup=1/100,  rate.dead=1/100) {
+                            jump.dist='exp', sd.par=NULL, rate.dup=1/100, rate.dead=1/100) {
 
     ## Checking if some of the arguments passed are the right format and adjusting if possible
     if (!is.vector(beta.vec) & !is.null(beta.vec)) {
@@ -301,7 +301,7 @@ RustSim.dd.exmp <- function(n.cells=200, n.genes=9, tau=c(5, 8, 15), n.states=3,
     t.dup <- rep(t.dup, 2)
     i.dup <- rep(i.dup, 2)
     i.stt.dup <- rep(i.stt.dup, 2)
-    gSim.dup <- array(-1, dim=c(2*length(i.dup), n.genes, n.point))
+    gSim.dup <- array(-1, dim=c(length(i.dup), n.genes, n.point))
     jump.time.dup <- JumpTime(tau, n.states, 2*length(t.dup), jump.dist=jump.dist, sd.par=sd.par)
     for (i.cell in 1:length(i.dup)) {
         gSimC <- NULL
