@@ -109,6 +109,14 @@ JumpTime  <- function(tau, n.states, n.cells, jump.dist = 'exp', sd.par = NULL) 
     return(jump.time)
 }
 
+CellFate  <- function(tau, n.cells) {
+    cell.fate <- matrix(NA, length(tau), n.cells)
+    for (i in 1:length(tau)) {
+        cell.fate[i, ] <- rexp(n.cells, 1 / tau[i])
+    }
+    return(cell.fate)
+}
+
 RustSim.rd <- function(n.cells=200, n.genes=9, tau=c(5, 8, 15), n.states=3, beta.vec=NULL, dt=0.01,
                        end.time=30, av.noise=0.01, stt.noise=rep(0, n.states), jump.dist='exp', sd.par=NULL,
                        p.dup=0.1, p.dead=0.1, p.n=0.9) {
@@ -168,13 +176,15 @@ RustSim.rd <- function(n.cells=200, n.genes=9, tau=c(5, 8, 15), n.states=3, beta
     }
 
 
-    gSim.dup <- array(-1, dim=c(length(i.dup), n.genes, n.point))
+
     jump.dup <- jump.time[, i.dup]
     i.stt.dup <- rep(1, length(i.dup))
     for (i.stt in 1:nrow(jump.dup)) {
         i.update <- t.dup * dt > jump.dup[i.stt, ]
         i.stt.dup[i.update] <- i.stt + 1
     }
+
+    gSim.dup <- array(-1, dim=c(length(i.dup), n.genes, n.point))
     jump.time.dup <- JumpTime(tau, n.states, length(t.dup), jump.dist=jump.dist, sd.par=sd.par)
     for (i.cell in 1:length(i.dup)) {
         gSimC <- NULL
@@ -217,5 +227,122 @@ RustSim.rd <- function(n.cells=200, n.genes=9, tau=c(5, 8, 15), n.states=3, beta
     ## Return values are full simulated data all time points, beta and if t given gSim
     ## with t-pts return all parameters used for this simulation
     return(list(gsim=gSim.mu, beta=betaVals, dataSim=dataSim, n.cells=n.cells, n.gns=n.genes,
+                tau=tau, dt=dt, n.stt=n.states, ns.av=av.noise, cell.branch=cell.branch))
+}
+
+RustSim.dd.exmp <- function(n.cells=200, n.genes=9, tau=c(5, 8, 15), n.states=3, beta.vec=NULL,
+                            dt=0.01, end.time=30, av.noise=0.01, stt.noise=rep(0, n.states),
+                            jump.dist='exp', sd.par=NULL, rate.dup=1/100,  rate.dead=1/100) {
+
+    ## Checking if some of the arguments passed are the right format and adjusting if possible
+    if (!is.vector(beta.vec) & !is.null(beta.vec)) {
+        stop('beta must be passed as vector')
+    }
+    if (length(stt.noise) != n.states & is.vector(stt.noise)) {
+        stt.noise <- rep(stt.noise, n.states)
+    }
+    ## get jump time from the state occupation time use function JumpTime
+    if (jump.dist != 'exp' & is.null(sd.par))
+        sd.par  <- end.time / n.states
+    jump.time <- JumpTime(tau, n.states, n.cells, jump.dist = jump.dist, sd.par = sd.par)
+    ## Checks if beta values are passed in the argument (as vector)
+    ## Assigns randomvalues to beta if not passed as argument
+    if (is.null(beta.vec)) {
+        beta.vec <- rnorm(n.genes * n.states, sd = 5)
+        beta.vec[beta.vec < 0]  <- 10^(-40)
+    }
+    ## Reshape betavector as matrix
+    betaVals <- matrix(beta.vec, n.genes, n.states)
+    ## Initialise results matrix with zeros
+    n.point <- end.time / dt
+
+    gSim <- array(NA, dim=c(n.cells, n.genes, n.point))
+    for (iCells in 1:n.cells) {
+        gSimC <- NULL
+        for (jStates in 1:(n.states - 1)) {
+            nSentries <- ceiling(jump.time[jStates, iCells] / dt)
+            val_tmp <- betaVals[, rep.int(jStates, nSentries)]
+            gSimC <- cbind(gSimC,  val_tmp + rnorm(length(val_tmp), sd = stt.noise[jStates]) )
+            rm(val_tmp)
+        }
+        nSentries <- (n.point - ncol(gSimC))
+        if (nSentries > 0) {
+            val_fin <- betaVals[, rep.int(n.states, nSentries)]
+            gSimC <- cbind(gSimC, val_fin + rnorm(length(val_fin), sd = stt.noise[n.states]))
+            rm(val_fin)
+        }
+        ## gSim <- gSim + gSimC[, 1:n.point] / n.cells
+        gSim[iCells, , ] <- gSimC[, 1:n.point]
+    }
+
+    cell.fate <- CellFate(1/c(rate.dup, rate.dead), n.cells)
+    i.dup <- which((cell.fate[1,] < end.time) & (cell.fate[1, ] < cell.fate[2,]) )
+    i.dead <- which((cell.fate[1, ] > cell.fate[2,]) & cell.fate[2, ] < end.time)
+    t.dup <- sample(1:n.point, length(i.dup))
+    t.dead <- sample(1:n.point, length(i.dead))
+
+    ## set dead cell to -1 after
+    for (i.d in 1:length(i.dead)) {
+        gSim[i.dead[i.d], ,-c(1:t.dead[i.d])] <- -1
+    }
+    ## set duplicated cells to -1 after duplication
+    for (i.d in 1:length(i.dup)) {
+        gSim[i.dup[i.d], ,-c(1:t.dup[i.d])] <- -1
+    }
+
+
+    jump.dup <- jump.time[, i.dup]
+    i.stt.dup <- rep(1, length(i.dup))
+    for (i.stt in 1:nrow(jump.dup)) {
+        i.update <- t.dup * dt > jump.dup[i.stt, ]
+        i.stt.dup[i.update] <- i.stt + 1
+    }
+
+    t.dup <- rep(t.dup, 2)
+    i.dup <- rep(i.dup, 2)
+    i.stt.dup <- rep(i.stt.dup, 2)
+    gSim.dup <- array(-1, dim=c(2*length(i.dup), n.genes, n.point))
+    jump.time.dup <- JumpTime(tau, n.states, 2*length(t.dup), jump.dist=jump.dist, sd.par=sd.par)
+    for (i.cell in 1:length(i.dup)) {
+        gSimC <- NULL
+        for (jStates in i.stt.dup[i.cell]:(n.states - 1)) {
+            if (jStates < n.states)
+                nSentries <- ceiling(jump.time.dup[jStates, i.cell] / dt)
+            else
+                nSentries <- n.point - t.dup[i.cell]
+            val_tmp <- betaVals[, rep.int(jStates, nSentries)]
+            gSimC <- cbind(gSimC,  val_tmp + rnorm(length(val_tmp), sd = stt.noise[jStates]) )
+            rm(val_tmp)
+        }
+        nSentries <- (n.point - t.dup[i.cell] + ncol(gSimC))
+        if (nSentries > 0) {
+            val_fin <- betaVals[, rep.int(n.states, nSentries)]
+            gSimC <- cbind(gSimC, val_fin + rnorm(length(val_fin), sd = stt.noise[n.states]))
+            rm(val_fin)
+        }
+        ## gSim <- gSim + gSimC[, 1:n.point] / n.cells
+        gSim.dup[i.cell, , -c(1:t.dup[i.cell])] <- gSimC[, 1:(n.point - t.dup[i.cell])]
+    }
+
+
+    gSim.A <- array(NA, dim=c(n.cells + length(t.dup), n.genes, n.point))
+    gSim.A[1:n.cells, , ] <- gSim
+    gSim.A[-c(1:n.cells), , ] <- gSim.dup
+    tmp.n <- (gSim.A[, 1, ] >= 0)
+    n.cell.dup <- apply(tmp.n, 2, sum)
+
+    gSim.A[gSim.A < 0] <- NA
+
+    gSim.mu <- matrix(NA, n.genes, n.point)
+    for (i.g in 1:n.genes) {
+        gSim.mu[i.g, ] <- apply(gSim.A[, i.g, ], 2, function(x) sum(x, na.rm=TRUE)) / n.cell.dup
+    }
+
+    ## Add gaussian noise to the data
+    datasim <- asinh(gSim.mu) + matrix(rnorm(length(gSim.mu), sd = av.noise), dim(gSim.mu))
+    dataSim <- sinh(datasim)
+    ## Return values are full simulated data all time points, beta and if t given gSim
+    ## with t-pts return all parameters used for this simulation
+    return(list(gsim=gSim.mu, beta=betaVals, dataSim=dataSim, n.cells=n.cell.dup, n.gns=n.genes,
                 tau=tau, dt=dt, n.stt=n.states, ns.av=av.noise, cell.branch=cell.branch))
 }
