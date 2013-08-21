@@ -1,7 +1,7 @@
 library(stats)
-library(BB)                             #use for spg
 library(expm)
 library(msm)
+library(tmvtnorm)
 
 ## ----------[ Simulations on single cells]--------------------
 ##' Forward simulation of model using single cells
@@ -103,7 +103,12 @@ JumpTime  <- function(tau, n.states, n.cells, jump.dist = 'exp', sd.par = NULL) 
         }
     } else if (jump.dist == 't.norm') {
         for (i in 1:(n.states -1)) {
-            jump.time  <- rbind(jump.time, abs(rtnorm(n = n.cells, mean = 1 / tau[i], sd = sd.par)))
+            jump.time  <- rbind(jump.time, abs(rtnorm(n = n.cells, mean = tau[i], sd = sd.par)))
+        }
+    } else if (jump.dist == 't.student') {
+        jump.time <- matrix(NA, length(tau), n.cells)
+        for (i in 1:length(tau)) {
+            jump.time[i, ] <- rtmvt(n=n.cells, mean=tau[i], sigma=sd.par, lower=0)
         }
     }
     return(jump.time)
