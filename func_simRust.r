@@ -429,5 +429,5 @@ RustSim.back <- function(n.cells=200, n.genes=9, tau=c(5, 8, 15), n.states=4, be
     ## Return values are full simulated data all time points, beta and if t given gSim
     ## with t-pts return all parameters used for this simulation
     return(list(gsim=gSim.mu, beta=betaVals, dataSim=dataSim, n.cells=n.cells, n.gns=n.genes,
-                tau=tau, dt=dt, n.stt=n.states, ns.av=av.noise, cell.branch=cell.branch))
+                tau=tau, dt=dt, n.stt=n.states, ns.av=av.noise))
 }
