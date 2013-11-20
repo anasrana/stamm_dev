@@ -108,7 +108,7 @@ JumpTime  <- function(tau, n.states, n.cells, jump.dist = 'exp', sd.par = NULL) 
     } else if (jump.dist == 't.student') {
         jump.time <- matrix(NA, length(tau), n.cells)
         for (i in 1:length(tau)) {
-            jump.time[i, ] <- rtmvt(n=n.cells, mean=tau[i], sigma=sd.par, lower=0)
+            jump.time[i, ] <- rtmvt(n=n.cells, mean=tau[i], df=sd.par, lower=0)
         }
     }
     return(jump.time)
