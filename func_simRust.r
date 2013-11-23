@@ -6,7 +6,7 @@ library(tmvtnorm)
 ## ----------[ Simulations on single cells]--------------------
 ##' Forward simulation of model using single cells
 ##'
-##' @title RustSim
+##' @title StammSim
 ##' @param n.cells number of cells used in simulation (default 200)
 ##' @param n.genes number of genes simulated (default 9)
 ##' @param tau average jump.time per state
@@ -16,7 +16,7 @@ library(tmvtnorm)
 ##' @param end.time final timepoint (in "real" time)
 ##' @param av.noise standard deviation of Gaussian noise added to population average (default 0.01)
 ##' @param stt.noise vector of standard deviations for Gaussian noise per state (default 0)
-RustSim <- function(n.cells = 200, n.genes = 9, tau = c(3.5, 5, 14.5), n.states = 2,
+StammSim <- function(n.cells = 200, n.genes = 9, tau = c(3.5, 5, 14.5), n.states = 2,
                     beta.vec = NULL, dt = 0.01, end.time = 30, av.noise = 0.01,
                     stt.noise = rep(0, n.states), jump.dist = 'exp', sd.par = NULL) {
 
@@ -122,7 +122,7 @@ CellFate  <- function(tau, n.cells) {
     return(cell.fate)
 }
 
-RustSim.rd <- function(n.cells=200, n.genes=9, tau=c(5, 8, 15), n.states=3, beta.vec=NULL, dt=0.01,
+StammSim.rd <- function(n.cells=200, n.genes=9, tau=c(5, 8, 15), n.states=3, beta.vec=NULL, dt=0.01,
                        end.time=30, av.noise=0.01, stt.noise=rep(0, n.states), jump.dist='exp', sd.par=NULL,
                        p.dup=0.1, p.dead=0.1, p.n=0.9) {
 
@@ -235,7 +235,7 @@ RustSim.rd <- function(n.cells=200, n.genes=9, tau=c(5, 8, 15), n.states=3, beta
                 tau=tau, dt=dt, n.stt=n.states, ns.av=av.noise, cell.branch=cell.branch))
 }
 
-RustSim.dd.exmp <- function(n.cells=200, n.genes=9, tau=c(5, 8, 15), n.states=3, beta.vec=NULL,
+StammSim.dd.exmp <- function(n.cells=200, n.genes=9, tau=c(5, 8, 15), n.states=3, beta.vec=NULL,
                             dt=0.01, end.time=30, av.noise=0.01, stt.noise=rep(0, n.states),
                             jump.dist='exp', sd.par=NULL, rate.dup=1/100, rate.dead=1/100) {
 
@@ -352,7 +352,7 @@ RustSim.dd.exmp <- function(n.cells=200, n.genes=9, tau=c(5, 8, 15), n.states=3,
                 tau=tau, dt=dt, n.stt=n.states, ns.av=av.noise, cell.fate=cell.fate))
 }
 
-RustSim.back <- function(n.cells=200, n.genes=9, tau=c(5, 8, 15), n.states=4, beta.vec=NULL, dt=0.01,
+StammSim.back <- function(n.cells=200, n.genes=9, tau=c(5, 8, 15), n.states=4, beta.vec=NULL, dt=0.01,
                          end.time=50, av.noise=0.01, stt.noise=rep(0, n.states), jump.dist='exp', sd.par=NULL,
                          back.tau) {
 

@@ -31,7 +31,7 @@ DLmse <- function(fit, loop.var, t.dat, g.dat) {
             }
             if (is.null(beta))
                 stop('wrong variable structure')
-            tmp <- RustKstt(w, beta, t.dat[inner.v[i.i]])
+            tmp <- StammKstt(w, beta, t.dat[inner.v[i.i]])
             mse.mat[i.o, i.i] <- mean(((asinh(tmp$y) - asinh(g.dat[, inner.v[i.i]])) / g.sd)^2)
             i.f <- i.f + 1
         }
@@ -53,7 +53,7 @@ DLmse <- function(fit, loop.var, t.dat, g.dat) {
 ##' @param b.fit beta matrix from fitting
 ##' @return
 ##' @author anas ahmad rana
-PlotCompBetaRust <- function(b.sim, b.fit, type.v = c('true', 'estimate')) {
+PlotCompBetaStamm <- function(b.sim, b.fit, type.v = c('true', 'estimate')) {
 
     p <- nrow(b.sim)
     k <- ncol(b.sim)
@@ -93,12 +93,12 @@ PlotCompBetaRust <- function(b.sim, b.fit, type.v = c('true', 'estimate')) {
 ##' @param w fitted w matrix
 ##' @return
 ##' @author anas ahmad rana
-PlotCompTrajRust <- function(g.dat, t, b.fit, w, p.title = '') {
+PlotCompTrajStamm <- function(g.dat, t, b.fit, w, p.title = '') {
 
 
     p <- nrow(b.fit)
     t.fit <- seq(0,max(t),0.01)
-    g.fit <- RustKstt(w, b.fit, t=t.fit)
+    g.fit <- StammKstt(w, b.fit, t=t.fit)
     fit.dat <- data.frame(g=as.vector(g.fit$y), gn=factor(rep( (rownames(b.fit)), length(t.fit))),
                           t=rep(t.fit, each=p))
     sim.dat <- data.frame(g=as.vector(g.dat), gn = factor(rep( (rownames(b.fit)), length(t))),
@@ -125,7 +125,7 @@ PlotCompTrajRust <- function(g.dat, t, b.fit, w, p.title = '') {
     return(t.g)
 }
 
-PlotTrajRust <- function(g.dat, t, p.title = '') {
+PlotTrajStamm <- function(g.dat, t, p.title = '') {
 
     p <- nrow(g.dat)
     sim.dat <- data.frame(g=as.vector(g.dat), gn = factor(rep( (rownames(g.dat)), length(t))),
@@ -151,7 +151,7 @@ PlotTrajRust <- function(g.dat, t, p.title = '') {
     return(t.g)
 }
 
-PlotBetaRust <- function(b.sim) {
+PlotBetaStamm <- function(b.sim) {
 
 
     p <- nrow(b.sim)
@@ -184,7 +184,7 @@ PlotBetaRust <- function(b.sim) {
 Vplayout <- function(x, y)
     viewport(layout.pos.row = x, layout.pos.col =y)
 
-PlotCvLambdaRust <- function(dat.mat, lambda, x.lab='', y.lab='', n.run=1, l.sz=1.2) {
+PlotCvLambdaStamm <- function(dat.mat, lambda, x.lab='', y.lab='', n.run=1, l.sz=1.2) {
 
     if(n.run==1) {
         dat.l <- data.frame(y.val=apply(dat.mat, 1, sum), lambda=lambda)
@@ -221,7 +221,7 @@ PlotCvLambdaRust <- function(dat.mat, lambda, x.lab='', y.lab='', n.run=1, l.sz=
     return(Plotp)
 }
 
-PlotCvFacetLambdaRust <- function(dat.mat, lambda, x.lab='predicted t-point', y.lab='RSS', t.dat,
+PlotCvFacetLambdaStamm <- function(dat.mat, lambda, x.lab='predicted t-point', y.lab='RSS', t.dat,
                                   title.g='RSS of t-pt knockout, facet lambda') {
 
     rss.tk <- data.frame(rss=as.vector(rss.mat), lambda=rep(lambda, length(t.dat)-1),
@@ -271,7 +271,7 @@ PlotCvFacetTrust <- function(dat.mat, lambda, x.lab='lambda', y.lab='RSS', t.dat
     return(Plotp)
 }
 
-PlotBetaScatterRust <- function(beta.sc, beta.al, title.g='Scatter plot comparing beta values',
+PlotBetaScatterStamm <- function(beta.sc, beta.al, title.g='Scatter plot comparing beta values',
                                 x.lab, b.scl = 'log', lmbd.vec, n.stt=4, n.gn=12) {
     if(b.scl=='log') {  #All the beta values below are shifted by one,
                                         #the assumption is that they contain 0 values
@@ -379,7 +379,7 @@ PlotWmatConvClust <- function(w.cl, tau, plot.as=FALSE, title.g='') {
 ##   ********************************************************************************
 
 
-RustCvRss <- function(fit.file, t.ko=NULL, k.states=NULL, m.cl=NULL) {
+StammCvRss <- function(fit.file, t.ko=NULL, k.states=NULL, m.cl=NULL) {
     load(fit.file)
     vec.mt <- cbind(rep(1:length(m.cl), length(t.ko)), rep(t.ko, each=length(m.cl)))
     names(fit) <- paste('m', vec.mt[, 1], 'td', vec.mt[, 2], sep='.')
@@ -392,7 +392,7 @@ RustCvRss <- function(fit.file, t.ko=NULL, k.states=NULL, m.cl=NULL) {
         for (i.t in t.ko) {
             beta <- fit[[i.j]]$beta
             w <- fit[[i.j]]$w
-            tmp <- RustKstt(w, beta, t.dat[i.t])
+            tmp <- StammKstt(w, beta, t.dat[i.t])
             rss.mat[i.k, i.t - 1] <- mean(((asinh(tmp$y) - asinh(g.dat[, i.t]))^2) / g.sd^2)
             i.j <- i.j + 1
         }
@@ -420,7 +420,7 @@ RustCvRss <- function(fit.file, t.ko=NULL, k.states=NULL, m.cl=NULL) {
     return(list(rss = rss.mat, plot.rss.cv=plot.rss.cv))
 }
 
-RustCvRssGridClst <- function(fit.file, n.stt=4, n.gn=120, t.ko=29, sim.file, m.cl) {
+StammCvRssGridClst <- function(fit.file, n.stt=4, n.gn=120, t.ko=29, sim.file, m.cl) {
 
     load(fit.file)
     load(sim.file)
@@ -432,7 +432,7 @@ RustCvRssGridClst <- function(fit.file, n.stt=4, n.gn=120, t.ko=29, sim.file, m.
         for (i.t in seq(t.ko, length.out = length(t.dat) - 1)) {
             bt <- fit[[i.l]][[i.t]]$beta
             w.fit <- fit[[i.l]][[i.t]]$w
-            rep.fit <- RustKstt(w.fit, bt,  t.dat)
+            rep.fit <- StammKstt(w.fit, bt,  t.dat)
             rss.mat[i.l, i.t - t.ko + 1] <- sum((log2(g.dat[, i.t - t.ko + 2] + 1) -
                                                  log2(rep.fit$y[, i.t - t.ko + 2] +1) )^2 )
         }
@@ -515,7 +515,7 @@ PlotPenFit <- function(fit, n.k, i.pen, t.dat, n.genes=20, g.names=NULL, g.all) 
     g.b <- NULL
     type <- NULL
     for (i in 1:length(w)) {
-        fit.tmp <- RustKstt(w[[i]], beta[[i]][g.names, ], t.fit)
+        fit.tmp <- StammKstt(w[[i]], beta[[i]][g.names, ], t.fit)
         y <- append(y, stack(data.frame(fit.tmp$y))$values)
         t <- append(t, rep(t.fit, each=n.genes))
         k <- append(k, rep(1:nrow(beta[[i]]), each=length(t.fit)))

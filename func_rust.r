@@ -9,8 +9,7 @@ library(multicore)      #Parallelisation of code
 ## ****************************************************************************************
 ##' Fits data to aggregate Markov Chain model
 ##'
-##' .. content for \details{} ..
-##' @title RustFitKstt
+##' @title StammFitKstt
 ##' @param g.dat gene expression data
 ##' @param t.dat time points of data
 ##' @param lambda L1 penalty parameter (default = 0.01)
@@ -23,7 +22,7 @@ library(multicore)      #Parallelisation of code
 ##' It returns the fitted $w$ matrix and the $/beta$ matrix. It also returns a  obj vector
 ##' that contains the rss, bic and aic scores for the fit.
 ##' @author anas ahmad rana
-RustFitKstt <- function(g.dat, t.dat, lambda=0.01, n.states=3, fix.w=FALSE, w=NULL, max.fit.iter=4) {
+StammFitKstt <- function(g.dat, t.dat, lambda=0.01, n.states=3, fix.w=FALSE, w=NULL, max.fit.iter=4) {
     p <- nrow(g.dat)
     if (fix.w) {
         p <- 1
@@ -41,10 +40,10 @@ RustFitKstt <- function(g.dat, t.dat, lambda=0.01, n.states=3, fix.w=FALSE, w=NU
         g.nl <- sd(g.dat)
 
     fun <- function(x) {
-        tmp <- RustPar(x = x, n.states = n.states, p = p, fix.w = fix.w, wFit = wFit)
+        tmp <- StammPar(x = x, n.states = n.states, p = p, fix.w = fix.w, wFit = wFit)
         wFit <- tmp$w
         betaFit <- tmp$beta
-        fit <- RustKstt(wFit, betaFit, t.dat)
+        fit <- StammKstt(wFit, betaFit, t.dat)
         rss <- {asinh(fit$y) - g.dat.l}^2
         penalty <- lambda * sum(betaFit / g.nl)
         ss <- c(rss, penalty)
@@ -72,7 +71,7 @@ RustFitKstt <- function(g.dat, t.dat, lambda=0.01, n.states=3, fix.w=FALSE, w=NU
     }
 
 
-    par <- RustPar(g.dat, res$par, n.states, fix.w=fix.w, wFit=w)
+    par <- StammPar(g.dat, res$par, n.states, fix.w=fix.w, wFit=w)
 
     n <- ncol(g.dat)
     if (fix.w) {
@@ -81,7 +80,7 @@ RustFitKstt <- function(g.dat, t.dat, lambda=0.01, n.states=3, fix.w=FALSE, w=NU
         names(obj) <- 'rss'
     } else {
         rss <- res$objective - lambda * sum(par$beta / g.nl)
-        obj <- RustBic(rss, n, par$beta)
+        obj <- StammBic(rss, n, par$beta)
     }
 
     return(list(fit = res, w = par$w, beta = par$beta, ms = obj))
@@ -90,13 +89,13 @@ RustFitKstt <- function(g.dat, t.dat, lambda=0.01, n.states=3, fix.w=FALSE, w=NU
 ##' Calculates BIC and AIC
 ##'
 ##' BIC and AIC calculated for least squared fit
-##' @title RustBic
+##' @title StammBic
 ##' @param rss The residual sum of squares of the fit
 ##' @param n numer of time points used when fitting
 ##' @param beta the number of parameters used to calculate Df
 ##' @return vector of rss bic and aic
 ##' @author anas ahmad rana
-RustBic <- function(rss, n, beta, b.thresh = 10^-4) {
+StammBic <- function(rss, n, beta, b.thresh = 10^-4) {
     Df <- sum(beta > b.thresh)
     bicSc <- n * log(rss / (n - 1)) + log(n) * Df
     aicSc <- n * log(rss / (n - 1)) + 2 * Df
@@ -109,7 +108,7 @@ RustBic <- function(rss, n, beta, b.thresh = 10^-4) {
 ##' Reshapes parameter vecot, x, into beta matrix and w matrix (or only beta matrix)
 ##'
 ##' .. content for \details{} ..
-##' @title RustPar
+##' @title StammPar
 ##' @param g.dat data matrix used for naming beta
 ##' @param x parameter vector to reshape into beta and w
 ##' @param n.states number of states in model
@@ -117,7 +116,7 @@ RustBic <- function(rss, n, beta, b.thresh = 10^-4) {
 ##' @param fix.w logical if w is kept fixed or not
 ##' @return The function returns w only if fix.w=F and it returns beta matrix rearranged from the x vector.
 ##' @author anas ahmad rana
-RustPar <- function(g.dat=NULL, x, n.states, p=nrow(g.dat), fix.w=FALSE, wFit=NULL, fit.cent=FALSE) {
+StammPar <- function(g.dat=NULL, x, n.states, p=nrow(g.dat), fix.w=FALSE, wFit=NULL, fit.cent=FALSE) {
     ## only rearrange
     if (fit.cent) {
         p <- nrow(g.dat)
@@ -158,13 +157,13 @@ RustPar <- function(g.dat=NULL, x, n.states, p=nrow(g.dat), fix.w=FALSE, wFit=NU
 ##' points, it then calculates a trajectory
 ##'
 ##'
-##' @title RustKstt
+##' @title StammKstt
 ##' @param wFit W transition matrix default=NULL
 ##' @param betaFit beta matrix p x T(n)
 ##' @param t time points
 ##' @return S unlogged trajectory for the arguments. P state occupation probabilities.
 ##' @author anas ahmad rana
-RustKstt <- function(wFit=NULL, betaFit, t) {
+StammKstt <- function(wFit=NULL, betaFit, t) {
     n <- length(t)
     p <- nrow(betaFit)
     ## create new matrix containing -offdiag on diag
@@ -204,7 +203,7 @@ RustKstt <- function(wFit=NULL, betaFit, t) {
 ##' @param n.genes
 ##' @return
 ##' @author anas ahmad rana
-RustCrossValClust.p <- function(g.dat, t.dat, k.stt, m.cl = seq(4, 20, 2),
+StammCrossValClust.p <- function(g.dat, t.dat, k.stt, m.cl = seq(4, 20, 2),
                                 n.core = 20, n.genes=nrow(g.dat)) {
     t.ko <- 2:length(t.dat)
 
@@ -219,9 +218,9 @@ RustCrossValClust.p <- function(g.dat, t.dat, k.stt, m.cl = seq(4, 20, 2),
             g.sd <- apply(g.dat.t, 1, sd)
             g.norm <- g.dat.t / g.sd
             g.km <- kmeans(g.norm, i.m, iter.max=100, nstart=50)
-            fit.cl[[i.a]] <- RustFitKstt(g.km$centers, t.dat[-i.t], lambda=0, n.states=k.stt)
+            fit.cl[[i.a]] <- StammFitKstt(g.km$centers, t.dat[-i.t], lambda=0, n.states=k.stt)
             w <- fit.cl[[i.a]]$w
-            fit.gn[[i.a]] <- RustFitGns(g.dat=g.dat.t, t.dat=t.dat[-i.t], n.states=k.stt,
+            fit.gn[[i.a]] <- StammFitGns(g.dat=g.dat.t, t.dat=t.dat[-i.t], n.states=k.stt,
                                         w=w, pll=TRUE, n.core=n.core)
             print('... DONE')
             i.a <- i.a + 1
@@ -252,7 +251,7 @@ TDelmse <- function(fit, t.dat, g.dat,  t.ko=2:length(t.dat)) {
         w <- fit[[i.t]]$w
         if (is.null(beta))
             stop('wrong variable structure')
-        tmp <- RustKstt(w, beta, t.dat[t.ko[i.t]])
+        tmp <- StammKstt(w, beta, t.dat[t.ko[i.t]])
         mse.vec[i.t] <- mean(((asinh(tmp$y) - asinh(g.dat[, t.ko[i.t]])) / g.sd)^2)
     }
     mse <- mean(sqrt(mse.vec))
@@ -262,7 +261,7 @@ TDelmse <- function(fit, t.dat, g.dat,  t.ko=2:length(t.dat)) {
 ##' .. content for \description{} (no empty lines) ..
 ##'
 ##' .. content for \details{} ..
-##' @title RustLoocv.p
+##' @title StammLoocv.p
 ##' @param g.dat data to be used when fitting
 ##' @param t.dat
 ##' @param k.stt
@@ -272,7 +271,7 @@ TDelmse <- function(fit, t.dat, g.dat,  t.ko=2:length(t.dat)) {
 ##' @param t.ko
 ##' @return
 ##' @author anas ahmad rana
-RustLoocv.p <- function(g.dat, t.dat, k.stt, m.cl, n.core=20, n.genes=nrow(g.dat), lambda=0,
+StammLoocv.p <- function(g.dat, t.dat, k.stt, m.cl, n.core=20, n.genes=nrow(g.dat), lambda=0,
                         t.ko=2:length(t.dat)) {
     fit.cl <- vector('list', length(t.ko))
     fit.gn <- vector('list', length(t.ko))
@@ -283,11 +282,11 @@ RustLoocv.p <- function(g.dat, t.dat, k.stt, m.cl, n.core=20, n.genes=nrow(g.dat
         g.norm <- g.dat.t / g.sd
         g.km <- kmeans(g.norm, m.cl, iter.max=50, nstart=50)
         cat('.')
-        fit.cl[[i.t]] <- RustFitKstt(g.km$centers, t.dat[-t.ko[i.t]], lambda=lambda,
+        fit.cl[[i.t]] <- StammFitKstt(g.km$centers, t.dat[-t.ko[i.t]], lambda=lambda,
                                      n.states=k.stt)
         cat('.')
         w <- fit.cl[[i.t]]$w
-        fit.gn[[i.t]] <- RustFitGns(g.dat=g.dat.t, t.dat=t.dat[-t.ko[i.t]], n.states=k.stt,
+        fit.gn[[i.t]] <- StammFitGns(g.dat=g.dat.t, t.dat=t.dat[-t.ko[i.t]], n.states=k.stt,
                                     lambda=lambda, w=w, pll=TRUE, n.core=n.core)
         cat('. DONE\n')
     }
@@ -301,12 +300,12 @@ RustLoocv.p <- function(g.dat, t.dat, k.stt, m.cl, n.core=20, n.genes=nrow(g.dat
 ##' of n.cl
 ##'
 ##' .. content for \details{} ..
-##' @title RustCluster
+##' @title StammCluster
 ##' @param g.dat data to be clustered
 ##' @param n.cl vector of arbitrary length
 ##' @return
 ##' @author anas ahmad rana
-RustCluster <- function(g.dat, m.cl) {
+StammCluster <- function(g.dat, m.cl) {
     ## Scale input data to unit variance
     g.sd <- apply(g.dat, 1, sd)
     g.norm <- (g.dat) / g.sd
@@ -361,13 +360,13 @@ ParClusterCV <- function(g.dat, t.dat=NULL, m.cl=seq(5, 20, 2), t.ko=2:ncol(g.da
         g.km <- kmeans(g.norm[, -t.dl], vec.mt[x, 1], iter.max=100, nstart=20)
         g.ct <- g.km$centers
         ## fit cluster centroids with fixed states k
-        fit.m <- RustFitKstt(g.ct, t.dat[-t.dl], lambda=0, n.states=k.stt)
+        fit.m <- StammFitKstt(g.ct, t.dat[-t.dl], lambda=0, n.states=k.stt)
         ## Fix w and fit all genes used in clustering
         w <- fit.m$w
         beta <- matrix(0, n.genes, k.stt)
         rownames(beta) <- rownames(g.dat[1:n.genes, ])
         for (i.j in 1:n.genes) {
-            fit.tmp <- RustFitKstt(g.dat[i.j, -t.dl], t.dat[-t.dl], lambda=l.pen,
+            fit.tmp <- StammFitKstt(g.dat[i.j, -t.dl], t.dat[-t.dl], lambda=l.pen,
                                    n.states=k.stt, fix.w=TRUE, w=w)
             beta[i.j, ] <- fit.tmp$beta
         }
@@ -379,7 +378,7 @@ ParClusterCV <- function(g.dat, t.dat=NULL, m.cl=seq(5, 20, 2), t.ko=2:ncol(g.da
     return(list(g.norm=g.norm, fit=fit))
 }
 
-RustChsKL <- function (g.dat, t.dat, m, k.vec=2:5, pen.vec=seq(0, 0.2, 0.05), pll=TRUE, w=NULL) {
+StammChsKL <- function (g.dat, t.dat, m, k.vec=2:5, pen.vec=seq(0, 0.2, 0.05), pll=TRUE, w=NULL) {
     n.k <- length(k.vec)
     fit.k <- vector('list', n.k)
     beta <-  vector('list', n.k)
@@ -407,12 +406,12 @@ FitClGns <- function(g.dat, t.dat, l.pen=0, k.stt, m, pll=FALSE, w=NULL, n.core=
         g.km <- kmeans(g.norm, m, iter.max=100, nstart=100)
         g.ct <- g.km$centers
         ## fit cluster centroids with fixed states k
-        fit.m <- RustFitKstt(g.ct, t.dat, lambda=0, n.states=k.stt)
+        fit.m <- StammFitKstt(g.ct, t.dat, lambda=0, n.states=k.stt)
         w <- fit.m$w
     }
     ## Fit all genes in g.dat with w from clustering and single penalty
     if (length(l.pen)==1) {
-        fit.g <- RustFitGns(g.dat=g.dat, t.dat=t.dat, lambda=l.pen, n.states=k.stt, w=w, pll=pll)
+        fit.g <- StammFitGns(g.dat=g.dat, t.dat=t.dat, lambda=l.pen, n.states=k.stt, w=w, pll=pll)
         bic <- fit.g$ms[2]
         aicc <- fit.g$ms[4]
     } else if (is.vector(l.pen)) {
@@ -420,7 +419,7 @@ FitClGns <- function(g.dat, t.dat, l.pen=0, k.stt, m, pll=FALSE, w=NULL, n.core=
         bic <- rep(NA, length(l.pen))
         aicc <- rep(NA, length(l.pen))
         for (i.l in 1:length(l.pen)) {
-            fit.g[[i.l]] <- RustFitGns(g.dat=g.dat, t.dat=t.dat, lambda=l.pen[i.l],
+            fit.g[[i.l]] <- StammFitGns(g.dat=g.dat, t.dat=t.dat, lambda=l.pen[i.l],
                                        n.states=k.stt, w=w, pll=pll, n.core=n.core)
             bic[i.l] <- fit.g[[i.l]]$ms[2]
             aicc[i.l] <- fit.g[[i.l]]$ms[4]
@@ -443,7 +442,7 @@ FitClGns <- function(g.dat, t.dat, l.pen=0, k.stt, m, pll=FALSE, w=NULL, n.core=
 ##' @param pll logical run in parallel if set to true
 ##' @return
 ##' @author anas ahmad rana
-RustFitGns <- function(g.names=NULL, g.dat, t.dat, lambda=0, n.states, w, pll=FALSE, n.core=20) {
+StammFitGns <- function(g.names=NULL, g.dat, t.dat, lambda=0, n.states, w, pll=FALSE, n.core=20) {
     if (!is.null(g.names)) {
         g.name.idx <- which(rownames(g.dat)==g.names)
     } else {
@@ -452,12 +451,12 @@ RustFitGns <- function(g.names=NULL, g.dat, t.dat, lambda=0, n.states, w, pll=FA
 
     if (pll) {
         fit.g <- mclapply(g.name.idx, function(x)
-                          cl.fit = RustFitKstt(g.dat=g.dat[x, ], t.dat=t.dat, lambda=lambda,
+                          cl.fit = StammFitKstt(g.dat=g.dat[x, ], t.dat=t.dat, lambda=lambda,
                               n.states=n.states, w=w, fix.w=TRUE),
                           mc.cores = n.core)
     } else {
         fit.g <- lapply(g.name.idx, function(x)
-                        cl.fit = RustFitKstt(g.dat=g.dat[x, ], t.dat=t.dat, lambda=lambda,
+                        cl.fit = StammFitKstt(g.dat=g.dat[x, ], t.dat=t.dat, lambda=lambda,
                             n.states=n.states, w=w, fix.w=TRUE))
     }
 
@@ -473,7 +472,7 @@ RustFitGns <- function(g.names=NULL, g.dat, t.dat, lambda=0, n.states, w, pll=FA
     names(rss.v) <- rownames(g.dat[g.name.idx, ])
     rss <- sum(rss.v)
     n <- length(t.dat)
-    ms <- RustBic(rss, n, betas)
+    ms <- StammBic(rss, n, betas)
 
     return(list(beta=betas, rss.v=rss.v, w=w, ms=ms))
 }
@@ -487,9 +486,9 @@ FixedParCV <- function(g.dat, t.dat, lambda=0, k.stt, m, n.core=30, t.ko=2:lengt
         g.sd <- apply(g.dat.t, 1, sd)
         g.norm <- g.dat.t / g.sd
         g.km <- kmeans(g.norm, m, iter.max=100, nstart=50)
-        fit.cl[[i.t]] <- RustFitKstt(g.km$centers, t.dat[-t.ko[i.t]], lambda=0, n.states=k.stt)
+        fit.cl[[i.t]] <- StammFitKstt(g.km$centers, t.dat[-t.ko[i.t]], lambda=0, n.states=k.stt)
         w <- fit.cl[[i.t]]$w
-        fit.gn[[i.t]] <- RustFitGns(g.dat=g.dat.t, t.dat=t.dat[-t.ko[i.t]], n.states=k.stt,
+        fit.gn[[i.t]] <- StammFitGns(g.dat=g.dat.t, t.dat=t.dat[-t.ko[i.t]], n.states=k.stt,
                                     w=w, pll=TRUE, n.core=n.core)
         print('... DONE')
     }
