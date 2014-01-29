@@ -10,8 +10,8 @@ library(multicore)      #Parallelisation of code
 ##' Fits data to aggregate Markov Chain model
 ##'
 ##' @title StammFitKstt
-##' @param g.dat gene expression data
-##' @param t.dat time points of data
+##' @param g.dat gene expression data p rows and n time points
+##' @param t.dat time points of data length n
 ##' @param lambda L1 penalty parameter (default = 0.01)
 ##' @param n.states number of states in the fitting
 ##' @param fit.as Fitting lin, log2Dat, logDat, log2Al (default = 'lin')
@@ -23,6 +23,7 @@ library(multicore)      #Parallelisation of code
 ##' that contains the rss, bic and aic scores for the fit.
 ##' @author anas ahmad rana
 StammFitKstt <- function(g.dat, t.dat, lambda=0.01, n.states=3, fix.w=FALSE, w=NULL, max.fit.iter=4) {
+    # Work out number of genes from data
     p <- nrow(g.dat)
     if (fix.w) {
         p <- 1
@@ -176,6 +177,8 @@ StammKstt <- function(wFit=NULL, betaFit, t) {
         p0[1] <- 1
         P <- matrix(NA, ncol(betaFit), n)
         for (i in 1:n) {
+            # TODO write this matrix exponential in C for the upper triangular and keep diagonal in R
+            # Only need to pass a vecor of non zeros to C fun not the whole upper triangular
             P[, i] <- expm::expm(wFit * t[i], method='Ward77') %*% p0
             ## mean gene expression
             S <- betaFit %*% P
@@ -232,7 +235,7 @@ StammCrossValClust.p <- function(g.dat, t.dat, k.stt, m.cl = seq(4, 20, 2),
 
 }
 
-##' .. content for \description{} (no empty lines) ..
+##' Calculates MSE_cv
 ##'
 ##' .. content for \details{} ..
 ##' @title
