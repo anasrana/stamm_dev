@@ -7,6 +7,7 @@ library(multicore)      #Parallelisation of code
 ## ****************************************************************************************
 ## ----------[ Functions for least squares fitting ]---------------------------------------
 ## ****************************************************************************************
+##' Main function, does most of the heavy lifting.
 ##' Fits data to aggregate Markov Chain model
 ##'
 ##' @title StammFitKstt
@@ -25,21 +26,28 @@ library(multicore)      #Parallelisation of code
 StammFitKstt <- function(g.dat, t.dat, lambda=0.01, n.states=3, fix.w=FALSE, w=NULL, max.fit.iter=4) {
     # Work out number of genes from data
     p <- nrow(g.dat)
+    # If w is fixed set p to 1 as fit is performed independently
+    # TODO Make sure it outputs error if fix.w and w disagree
     if (fix.w) {
         p <- 1
+        # Initialise first guess for parameter and transition rates
         x0 <- runif (p * n.states)
         wFit <- w
     } else if (fix.w == FALSE)  {
         x0 <- runif ((n.states - 1) + nrow(g.dat) * n.states )
+        # Initialise first guess for parameter and transition rates
         wFit <- NULL
     }
 
+    # Input data should be standardised and not normalised
+    # Here we calculate variables needed for normalisation
     g.dat.l <- asinh(g.dat)
     if ( !is.vector(g.dat) )
         g.nl <- apply(g.dat, 1, sd)
     else
         g.nl <- sd(g.dat)
 
+    # Function used in the optimisation
     fun <- function(x) {
         tmp <- StammPar(x = x, n.states = n.states, p = p, fix.w = fix.w, wFit = wFit)
         wFit <- tmp$w
@@ -51,15 +59,20 @@ StammFitKstt <- function(g.dat, t.dat, lambda=0.01, n.states=3, fix.w=FALSE, w=N
         obj <- sum(ss)
         obj
     }
+    # calculate scale for each parameter as the max of data for that gene
     if (is.vector(g.dat)) {
         par.scale <- c(rep(1, n.states - 1), rep(max(g.dat), n.states))
     } else {
         par.scale <- c(rep(1, n.states - 1), rep(apply(g.dat, 1, max), n.states))
     }
 
+    # Set two parameters to ensure results are converged
+    # If fits don't converge they are repeated to ensure sensible results are returned
     fit.conv <- 10^8
     fit.iter <- 1
+
     while (fit.conv != 0 & fit.iter < max.fit.iter) {
+        # Use non linear mean squared numerical tool for estimation
         res.tmp <- nlminb(x0, fun, lower = 0, upper = max(g.dat), scale = 1 / par.scale,
                   control=list(iter.max=10000, eval.max=7000, rel.tol=10^-14, sing.tol=10^-14))
         if (res.tmp$convergence <= fit.conv){
@@ -71,9 +84,10 @@ StammFitKstt <- function(g.dat, t.dat, lambda=0.01, n.states=3, fix.w=FALSE, w=N
         fit.iter  <- fit.iter + 1
     }
 
-
+    # calculate parameter list and put in the right format
     par <- StammPar(g.dat, res$par, n.states, fix.w=fix.w, wFit=w)
 
+    # Deprecated: Model selection using BIC or AIC
     n <- ncol(g.dat)
     if (fix.w) {
         rss <- res$objective - lambda * sum(par$beta / g.nl)
@@ -97,6 +111,8 @@ StammFitKstt <- function(g.dat, t.dat, lambda=0.01, n.states=3, fix.w=FALSE, w=N
 ##' @return vector of rss bic and aic
 ##' @author anas ahmad rana
 StammBic <- function(rss, n, beta, b.thresh = 10^-4) {
+    # Degrees of freed calculated by setting a threshold for estimated beta
+    # Based on Hastie for penalised estimates
     Df <- sum(beta > b.thresh)
     bicSc <- n * log(rss / (n - 1)) + log(n) * Df
     aicSc <- n * log(rss / (n - 1)) + 2 * Df
