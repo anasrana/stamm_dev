@@ -210,10 +210,11 @@ StammKstt <- function(wFit=NULL, betaFit, t) {
 ## Clustering and fitting centroids
 ## ******************************************************************************************
 
-##' .. content for \description{} (no empty lines) ..
+##' Function to determine \hat{m}, performs clustering followed by estimation of w from centroids
+##' and estimation of beta parameters for all genes. All steps are performed inside a loop with LOOCV
 ##'
-##' .. content for \details{} ..
-##' @title
+##'
+##' @title StammCrossValClust.p
 ##' @param g.dat
 ##' @param t.dat
 ##' @param k.stt
@@ -222,8 +223,7 @@ StammKstt <- function(wFit=NULL, betaFit, t) {
 ##' @param n.genes
 ##' @return
 ##' @author anas ahmad rana
-StammCrossValClust.p <- function(g.dat, t.dat, k.stt, m.cl = seq(4, 20, 2),
-                                n.core = 20, n.genes=nrow(g.dat)) {
+StammCrossValClust.p <- function(g.dat, t.dat, k.stt, m.cl = seq(4, 20, 2), n.core = 20, n.genes=nrow(g.dat)) {
     t.ko <- 2:length(t.dat)
 
     fit.cl <- vector('list', length(m.cl) * (length(t.ko)))
@@ -277,7 +277,7 @@ TDelmse <- function(fit, t.dat, g.dat,  t.ko=2:length(t.dat)) {
     return(mse)
 }
 
-##' .. content for \description{} (no empty lines) ..
+##' LOOCV with fixed number of clusters
 ##'
 ##' .. content for \details{} ..
 ##' @title StammLoocv.p
@@ -290,8 +290,7 @@ TDelmse <- function(fit, t.dat, g.dat,  t.ko=2:length(t.dat)) {
 ##' @param t.ko
 ##' @return
 ##' @author anas ahmad rana
-StammLoocv.p <- function(g.dat, t.dat, k.stt, m.cl, n.core=20, n.genes=nrow(g.dat), lambda=0,
-                        t.ko=2:length(t.dat)) {
+StammLoocv.p <- function(g.dat, t.dat, k.stt, m.cl, n.core=20, n.genes=nrow(g.dat), lambda=0, t.ko=2:length(t.dat)) {
     fit.cl <- vector('list', length(t.ko))
     fit.gn <- vector('list', length(t.ko))
     for (i.t in 1:length(t.ko)) {
@@ -366,8 +365,7 @@ StammCluster <- function(g.dat, m.cl) {
 ##' @param k.stt
 ##' @return
 ##' @author anas ahmad rana
-ParClusterCV <- function(g.dat, t.dat=NULL, m.cl=seq(5, 20, 2), t.ko=2:ncol(g.dat),
-                         k.stt=4, l.pen=0) {
+ParClusterCV <- function(g.dat, t.dat=NULL, m.cl=seq(5, 20, 2), t.ko=2:ncol(g.dat), k.stt=4, l.pen=0) {
     ## some parameters determined from the input
     n.genes <- nrow(g.dat)
     g.norm <- g.dat / apply(g.dat, 1, sd)
